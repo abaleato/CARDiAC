@@ -14,8 +14,8 @@ import galaxy_ps
 
 
 class experiment:
-    def __init__(self, sigma, z_mean, sigma_zshift, sigma_zwidth, nside, bvec, z_min_int=0.005, z_max_int = z_mean+2,
-                 modulation_of_mean_of_draws=None, n_samples_of_chi=2**10, nside_upsampling=64, plots_dir='', k=None):
+    def __init__(self, sigma, z_mean, sigma_zshift, sigma_zwidth, nside, bvec, z_min_int=0.005, z_max_int = None,
+                 modulation_of_mean_of_draws=0, n_samples_of_chi=2**10, nside_upsampling=64, plots_dir='', k=None):
         """ Initialise a cosmology and experimental charactierstics
             - Inputs:
                 * sigma = float. Standard deviation of the fiducial dndz
@@ -35,13 +35,15 @@ class experiment:
         self.sigma = sigma
         self.z_mean = z_mean
         self.z_min_int = z_min_int
+        if z_max_int is None:
+            z_max_int = z_mean + 2
         self.z_max_int = z_max_int
         self.sigma_zshift = sigma_zshift
         self.sigma_zwidth = sigma_zwidth
         self.nside = nside
-        self.bvec
+        self.bvec = bvec
         self.plots_dir = plots_dir
-        if k is not None:
+        if k is None:
             k = np.logspace(-3,0,200)
         npix = hp.nside2npix(nside)
 
