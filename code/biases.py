@@ -358,25 +358,19 @@ def integrand_unbiased_auto_term(chi, phi_fid, Pkgg_interp_1D):
 # Integral evaluations
 #
 
-def mode_coupling_bias(exp, ells, lprime_max=100, parallelize=False, miniter=1000, maxiter=2000, tol=1e-12):
+def mode_coupling_bias(exp, ells, lprime_max=100, num_processes=1, miniter=1000, maxiter=2000, tol=1e-12):
     """ Calculate the mode-coupling bias to the galaxy clustering power spectrum in the Limber approximation
         - Inputs:
             * exp = an instance of the experiment class
             * ells = np array of ints. The ells at which to evaluate this bias
             * lprime_max (optional) = int. Value of l above which we ignore the anisotropy in C_l^{\Delta \phi}
-            * parallelize (optional) = Bool. Whether or not to use multiprocessing to evaluate
+            * num_processes (optional) = int. Number of processes to use. If >1, use multirocessing
             * miniter (optional) = int. Minimum number of iterations for quadrature.
             * maxiter (optional) = int. Maximum number of iterations for quadrature.
             * tol (optional) = int. Error tolerance before breaking numerical integration.
     """
-    if parallelize:
+    if num_processes>1:
         # Use multiprocessing to speed up calculation
-        if len(ells)>multiprocessing.cpu_count():
-            # Start as many processes as machine can handle
-            num_processes = multiprocessing.cpu_count()
-        else:
-            # Only start as many as you need
-            num_processes = len(ells)
         print('Running in parallel with {} processes'.format(num_processes))
         pool = multiprocessing.Pool(num_processes)
         # Helper function (pool.map can only take one, iterable input)
@@ -418,24 +412,18 @@ def mode_coupling_bias_at_l(exp, lprime_max, miniter, maxiter, tol, l):
                 result += integ
     return result
 
-def additive_bias(exp, ells, parallelize=False, miniter=1000, maxiter=2000, tol=1e-12):
+def additive_bias(exp, ells, num_processes=1, miniter=1000, maxiter=2000, tol=1e-12):
     """ Calculate the mode-coupling bias to the galaxy clustering power spectrum
         - Inputs:
             * exp = an instance of the experiment class
             * ells = np array of ints. The ells at which to evaluate this bias
-            * parallelize (optional) = Bool. Whether or not to use multiprocessing to evaluate
+            * num_processes (optional) = int. Number of processes to use. If >1, use multirocessing
             * miniter (optional) = int. Minimum number of iterations for quadrature.
             * maxiter (optional) = int. Maximum number of iterations for quadrature.
             * tol (optional) = int. Error tolerance before breaking numerical integration.
     """
-    if parallelize:
+    if num_processes>1:
         # Use multiprocessing to speed up calculation
-        if len(ells)>multiprocessing.cpu_count():
-            # Start as many processes as machine can handle
-            num_processes = multiprocessing.cpu_count()
-        else:
-            # Only start as many as you need
-            num_processes = len(ells)
         print('Running in parallel with {} processes'.format(num_processes))
         # Helper function (pool.map can only take one, iterable input)
         func = partial(additive_bias_at_l, exp, miniter, maxiter, tol)
@@ -472,24 +460,18 @@ def additive_bias_at_l(exp, miniter, maxiter, tol, l):
         result = 0
     return result
 
-def unbiased_term(exp, ells, parallelize=False, miniter=1000, maxiter=2000, tol=1e-12):
+def unbiased_term(exp, ells, num_processes=1, miniter=1000, maxiter=2000, tol=1e-12):
     """ Calculate the unbiased contribution to the galaxy clustering power spectrum in the Limber approximation
         - Inputs:
             * exp = an instance of the experiment class
             * ells = np array of ints. The ells at which to evaluate this bias
-            * parallelize (optional) = Bool. Whether or not to use multiprocessing to evaluate
+            * num_processes (optional) = int. Number of processes to use. If >1, use multirocessing
             * miniter (optional) = int. Minimum number of iterations for quadrature.
             * maxiter (optional) = int. Maximum number of iterations for quadrature.
             * tol (optional) = int. Error tolerance before breaking numerical integration.
     """
-    if parallelize:
+    if num_processes>1:
         # Use multiprocessing to speed up calculation
-        if len(ells)>multiprocessing.cpu_count():
-            # Start as many processes as machine can handle
-            num_processes = multiprocessing.cpu_count()
-        else:
-            # Only start as many as you need
-            num_processes = len(ells)
         print('Running in parallel with {} processes'.format(num_processes))
         # Helper function (pool.map can only take one, iterable input)
         func = partial(unbiased_term_at_l, exp, miniter, maxiter, tol)
