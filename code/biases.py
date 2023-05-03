@@ -524,6 +524,6 @@ def load_from_file(filename='./dict_with_properties'):
         experiment_dict = pickle.load(input)
     print('Successfully loaded experiment object with properties:\n')
 
-    dummy_object = A()
+    dummy_object = dummy_class()
     dummy_object.__dict__ = experiment_dict
     return dummy_object
