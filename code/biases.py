@@ -64,7 +64,7 @@ class experiment:
         self.sigma_chiwidth = Planck18.comoving_distance(z_mean + sigma_zwidth).value - Planck18.comoving_distance(
             z_mean).value
 
-        # Initialize samples in r (r is comoving distance throughout)
+        # Initialize samples in chi (chi is comoving distance throughout)
         n_samples_of_chi = 2 ** 10  # Choose a power of 2
 
         # Get the redshift corresponding to these values of chi in the Planck18 cosmology
@@ -166,20 +166,6 @@ class experiment:
         """
         with open(output_filename+'.pkl', 'wb') as output:
             pickle.dump(self.__dict__, output, pickle.HIGHEST_PROTOCOL)
-
-    def load_from_file(filename='./dict_with_biases.pkl'):
-        """
-        Load a dictionary of the key properties. Must have previously been save  experiment.save_properties()
-        Inputs:
-            * filename = str. Filename for the pickle object to be loaded
-        Returns:
-            * Dict of biases with indexing as in experiment.biases
-        """
-        with open(filename, 'rb') as input:
-            experiment_object = pickle.load(input)
-        print('Successfully loaded experiment object with properties:\n')
-        print(experiment_object)
-        return experiment_object
 
     def plot_realizations(self):
         '''
@@ -508,3 +494,21 @@ def unbiased_term_at_l(exp, l):
     result, error = quadrature(integrand_unbiased_auto_term, exp.chi_min_int, exp.chi_max_int,
                                          args=(Pkgg_interp_1D), miniter=1000, maxiter=2000, tol=1e-12)
     return result
+
+def load_from_file(filename='./dict_with_biases.pkl'):
+    """
+    Load a dictionary of the key properties. Must have previously been save  experiment.save_properties()
+    Inputs:
+        * filename = str. Filename for the pickle object to be loaded
+    Returns:
+        * A dummy object with the right attributes
+    """
+    with open(filename, 'rb') as input:
+        experiment_dict = pickle.load(input)
+    print('Successfully loaded experiment object with properties:\n')
+
+    class A(object):
+        def __init__(self):
+    dummy_object = A()
+    dummy_object.__dict__ = experiment_dict
+    return dummy_object
