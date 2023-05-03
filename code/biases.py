@@ -158,6 +158,29 @@ class experiment:
         self.Pkgg_interp = interpolate.RegularGridInterpolator((k, chis_sampled), self.Pkgg,
                                                           method='linear', bounds_error=False, fill_value=0)
 
+    def save_properties(self, output_filename='./dict_with_properties'):
+        """
+        Save the dictionary of key properties to file
+        Inputs:
+            * output_filename = str. Output filename
+        """
+        with open(output_filename+'.pkl', 'wb') as output:
+            pickle.dump(self.__dict__, output, pickle.HIGHEST_PROTOCOL)
+
+    def load_from_file(filename='./dict_with_biases.pkl'):
+        """
+        Load a dictionary of the key properties. Must have previously been save  experiment.save_properties()
+        Inputs:
+            * filename = str. Filename for the pickle object to be loaded
+        Returns:
+            * Dict of biases with indexing as in experiment.biases
+        """
+        with open(filename, 'rb') as input:
+            experiment_object = pickle.load(input)
+        print('Successfully loaded experiment object with properties:\n')
+        print(experiment_object)
+        return experiment_object
+
     def plot_realizations(self):
         '''
         Plot some typical realizations
