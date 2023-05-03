@@ -496,7 +496,7 @@ def unbiased_term_at_l(exp, l):
                                          args=(Pkgg_interp_1D), miniter=1000, maxiter=2000, tol=1e-12)
     return result
 
-def load_from_file(filename='./dict_with_biases.pkl'):
+def load_from_file(filename='./dict_with_properties.pkl'):
     """
     Load a dictionary of the key properties. Must have previously been save  experiment.save_properties()
     Inputs:
