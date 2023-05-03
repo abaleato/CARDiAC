@@ -455,7 +455,7 @@ def additive_bias_at_l(exp, l):
         result, error = quadrature(integrand_additive_term, exp.chi_min_int,
                                              exp.chi_max_int, args=(Clchi1chi2_interp, exp.chi_min_int, exp.chi_max_int),
                                              miniter=3, maxiter=5, tol=1e-20)
-    except: IndexError as e:
+    except IndexError as e:
         print(f"{e}")
         print('Setting the result to 0 because ClDeltaphi ought to be 0 at this l')
         result = 0
