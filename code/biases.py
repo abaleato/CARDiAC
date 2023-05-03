@@ -360,10 +360,12 @@ def mode_coupling_bias(exp, ells, lprime_max=100, parallelize=False):
         # Use multiprocessing to speed up calculation
         if len(ells)>multiprocessing.cpu_count():
             # Start as many processes as machine can handle
-            pool = multiprocessing.Pool(multiprocessing.cpu_count())
+            num_processes = multiprocessing.cpu_count()
         else:
             # Only start as many as you need
-            pool = multiprocessing.Pool(len(ells))
+            num_processes = len(ells)
+        print('Running in parallel with {} processes'.format(num_processes))
+        pool = multiprocessing.Pool(num_processes)
         # Helper function (pool.map can only take one, iterable input)
         func = partial(mode_coupling_bias_at_l, exp, lprime_max)
         conv_bias = np.array(pool.map(func, ells))
@@ -371,7 +373,6 @@ def mode_coupling_bias(exp, ells, lprime_max=100, parallelize=False):
     else:
         conv_bias = np.zeros_like(ells, dtype=float)
         for i, l in enumerate(ells):
-            print('Working on l={}; iteration {}/{}'.format(l, i + 1, len(ells)))
             conv_bias[i] = mode_coupling_bias_at_l(exp, lprime_max, l)
     return conv_bias
 
@@ -383,6 +384,7 @@ def mode_coupling_bias_at_l(exp, lprime_max, l):
             * lprime_max = int. Value of l above which we ignore the anisotropy in C_l^{\Delta \phi}
             * l = int. The multipole of \Delta C_l
     """
+    print('Working on l={}'.format(l))
     result = 0
     for lprime in range(lprime_max):
         for L in np.arange(np.abs(l - lprime), np.abs(l + lprime) + 1, 1):
@@ -412,10 +414,11 @@ def additive_bias(exp, ells, parallelize=False):
         # Use multiprocessing to speed up calculation
         if len(ells)>multiprocessing.cpu_count():
             # Start as many processes as machine can handle
-            pool = multiprocessing.Pool(multiprocessing.cpu_count())
+            num_processes = multiprocessing.cpu_count()
         else:
             # Only start as many as you need
-            pool = multiprocessing.Pool(len(ells))
+            num_processes = len(ells)
+        print('Running in parallel with {} processes'.format(num_processes))
         # Helper function (pool.map can only take one, iterable input)
         func = partial(additive_bias_at_l, exp)
         additive_bias = np.array(pool.map(func, ells))
@@ -423,7 +426,6 @@ def additive_bias(exp, ells, parallelize=False):
     else:
         additive_bias = np.zeros_like(ells, dtype=float)
         for i, l in enumerate(ells):
-            print('Working on l={}; iteration {}/{}'.format(l, i+1, len(ells)))
             additive_bias[i], error = additive_bias_at_l(exp, l)
     return additive_bias
 
@@ -434,6 +436,7 @@ def additive_bias_at_l(exp, l):
             * exp = an instance of the experiment class
             * l = int. The multipole of \Delta C_l
     """
+    print('Working on l={}'.format(l))
     Clchi1chi2_interp = interpolate.RegularGridInterpolator((exp.chi_array, exp.chi_array),
                                                             exp.Cl_deltap_of_chi1_chi2[l, :, :],
                                                             method='linear', bounds_error=True, fill_value=0)
@@ -454,10 +457,11 @@ def unbiased_term(exp, ells, parallelize=False):
         # Use multiprocessing to speed up calculation
         if len(ells)>multiprocessing.cpu_count():
             # Start as many processes as machine can handle
-            pool = multiprocessing.Pool(multiprocessing.cpu_count())
+            num_processes = multiprocessing.cpu_count()
         else:
             # Only start as many as you need
-            pool = multiprocessing.Pool(len(ells))
+            num_processes = len(ells)
+        print('Running in parallel with {} processes'.format(num_processes))
         # Helper function (pool.map can only take one, iterable input)
         func = partial(unbiased_term_at_l, exp)
         clgg_unbiased = np.array(pool.map(func, ells))
@@ -465,7 +469,6 @@ def unbiased_term(exp, ells, parallelize=False):
     else:
         clgg_unbiased = np.zeros_like(ells, dtype=float)
         for i, l in enumerate(ells):
-            print('Working on l={}; iteration {}/{}'.format(l, i + 1, len(ells)))
             clgg_unbiased[i] = unbiased_term_at_l(exp, l)
     return clgg_unbiased
 
@@ -476,6 +479,7 @@ def unbiased_term_at_l(exp, l):
             * exp = an instance of the experiment class
             * l = int. The multipole of \Delta C_l
     """
+    print('Working on l={}'.format(l))
     X, Y = np.meshgrid((l + 0.5) / exp.chi_array, exp.chi_array, indexing='ij')
     Pkgg_interp_1D = interp1d(exp.chi_array, np.diagonal(exp.Pkgg_interp((X, Y))))
     result, error = quadrature(integrand_unbiased_auto_term, exp.chi_min_int, exp.chi_max_int,
