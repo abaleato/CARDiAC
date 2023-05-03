@@ -509,6 +509,7 @@ def load_from_file(filename='./dict_with_biases.pkl'):
 
     class A(object):
         def __init__(self):
+            print('Initialized emptyo object')
     dummy_object = A()
     dummy_object.__dict__ = experiment_dict
     return dummy_object
