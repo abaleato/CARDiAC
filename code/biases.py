@@ -425,6 +425,7 @@ def additive_bias(exp, ells, num_processes=1, miniter=1000, maxiter=2000, tol=1e
     if num_processes>1:
         # Use multiprocessing to speed up calculation
         print('Running in parallel with {} processes'.format(num_processes))
+        pool = multiprocessing.Pool(num_processes)
         # Helper function (pool.map can only take one, iterable input)
         func = partial(additive_bias_at_l, exp, miniter, maxiter, tol)
         additive_bias = np.array(pool.map(func, ells))
@@ -472,6 +473,7 @@ def unbiased_term(exp, ells, num_processes=1, miniter=1000, maxiter=2000, tol=1e
     """
     if num_processes>1:
         # Use multiprocessing to speed up calculation
+        pool = multiprocessing.Pool(num_processes)
         print('Running in parallel with {} processes'.format(num_processes))
         # Helper function (pool.map can only take one, iterable input)
         func = partial(unbiased_term_at_l, exp, miniter, maxiter, tol)
