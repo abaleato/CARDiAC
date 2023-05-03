@@ -449,7 +449,7 @@ def additive_bias_at_l(exp, l):
     print('Working on l={}'.format(l))
     Clchi1chi2_interp = interpolate.RegularGridInterpolator((exp.chi_array, exp.chi_array),
                                                             exp.Cl_deltap_of_chi1_chi2[l, :, :],
-                                                            method='linear', bounds_error=True, fill_value=0)
+                                                            method='linear', bounds_error=False, fill_value=0)
 
     result, error = quadrature(integrand_additive_term, exp.chi_min_int,
                                          exp.chi_max_int, args=(Clchi1chi2_interp, exp.chi_min_int, exp.chi_max_int),
