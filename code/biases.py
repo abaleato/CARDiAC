@@ -358,13 +358,16 @@ def integrand_unbiased_auto_term(chi, phi_fid, Pkgg_interp_1D):
 # Integral evaluations
 #
 
-def mode_coupling_bias(exp, ells, lprime_max=100, parallelize=False):
+def mode_coupling_bias(exp, ells, lprime_max=100, parallelize=False, miniter=1000, maxiter=2000, tol=1e-12):
     """ Calculate the mode-coupling bias to the galaxy clustering power spectrum in the Limber approximation
         - Inputs:
             * exp = an instance of the experiment class
             * ells = np array of ints. The ells at which to evaluate this bias
             * lprime_max (optional) = int. Value of l above which we ignore the anisotropy in C_l^{\Delta \phi}
             * parallelize (optional) = Bool. Whether or not to use multiprocessing to evaluate
+            * miniter (optional) = int. Minimum number of iterations for quadrature.
+            * maxiter (optional) = int. Maximum number of iterations for quadrature.
+            * tol (optional) = int. Error tolerance before breaking numerical integration.
     """
     if parallelize:
         # Use multiprocessing to speed up calculation
@@ -377,21 +380,24 @@ def mode_coupling_bias(exp, ells, lprime_max=100, parallelize=False):
         print('Running in parallel with {} processes'.format(num_processes))
         pool = multiprocessing.Pool(num_processes)
         # Helper function (pool.map can only take one, iterable input)
-        func = partial(mode_coupling_bias_at_l, exp, lprime_max)
+        func = partial(mode_coupling_bias_at_l, exp, lprime_max, miniter, maxiter, tol)
         conv_bias = np.array(pool.map(func, ells))
         pool.close()
     else:
         conv_bias = np.zeros_like(ells, dtype=float)
         for i, l in enumerate(ells):
-            conv_bias[i] = mode_coupling_bias_at_l(exp, lprime_max, l)
+            conv_bias[i] = mode_coupling_bias_at_l(exp, lprime_max, miniter, maxiter, tol, l)
     return conv_bias
 
-def mode_coupling_bias_at_l(exp, lprime_max, l):
+def mode_coupling_bias_at_l(exp, lprime_max, miniter, maxiter, tol, l):
     """ Calculate the mode-coupling bias to the galaxy clustering power spectrum in the Limber approximation,
         at a specific l.
         - Inputs:
             * exp = an instance of the experiment class
             * lprime_max = int. Value of l above which we ignore the anisotropy in C_l^{\Delta \phi}
+            * miniter (optional) = int. Minimum number of iterations for quadrature.
+            * maxiter (optional) = int. Maximum number of iterations for quadrature.
+            * tol (optional) = int. Error tolerance before breaking numerical integration.
             * l = int. The multipole of \Delta C_l
     """
     print('Working on l={}'.format(l))
@@ -407,18 +413,20 @@ def mode_coupling_bias_at_l(exp, lprime_max, l):
                 Pkgg_interp_1D = interp1d(exp.chi_array, np.diagonal(exp.Pkgg_interp((X, Y))))
 
                 integ, error = quadrature(integrand_conv_term, exp.chi_min_int, exp.chi_max_int,
-                                          args=(lprime, Pkgg_interp_1D, prefactor, exp.cldp_interp), miniter=1000,
-                                          maxiter=2000,
-                                          tol=1e-12)
+                                          args=(lprime, Pkgg_interp_1D, prefactor, exp.cldp_interp), miniter=miniter,
+                                          maxiter=maxiter, tol=tol)
                 result += integ
     return result
 
-def additive_bias(exp, ells, parallelize=False):
+def additive_bias(exp, ells, parallelize=False, miniter=1000, maxiter=2000, tol=1e-12):
     """ Calculate the mode-coupling bias to the galaxy clustering power spectrum
         - Inputs:
             * exp = an instance of the experiment class
             * ells = np array of ints. The ells at which to evaluate this bias
             * parallelize (optional) = Bool. Whether or not to use multiprocessing to evaluate
+            * miniter (optional) = int. Minimum number of iterations for quadrature.
+            * maxiter (optional) = int. Maximum number of iterations for quadrature.
+            * tol (optional) = int. Error tolerance before breaking numerical integration.
     """
     if parallelize:
         # Use multiprocessing to speed up calculation
@@ -430,20 +438,23 @@ def additive_bias(exp, ells, parallelize=False):
             num_processes = len(ells)
         print('Running in parallel with {} processes'.format(num_processes))
         # Helper function (pool.map can only take one, iterable input)
-        func = partial(additive_bias_at_l, exp)
+        func = partial(additive_bias_at_l, exp, miniter, maxiter, tol)
         additive_bias = np.array(pool.map(func, ells))
         pool.close()
     else:
         additive_bias = np.zeros_like(ells, dtype=float)
         for i, l in enumerate(ells):
-            additive_bias[i] = additive_bias_at_l(exp, l)
+            additive_bias[i] = additive_bias_at_l(exp, miniter, maxiter, tol, l)
     return additive_bias
 
-def additive_bias_at_l(exp, l):
+def additive_bias_at_l(exp, miniter, maxiter, tol, l):
     """ Calculate the mode-coupling bias to the galaxy clustering power spectrum
         at a specific l.
         - Inputs:
             * exp = an instance of the experiment class
+            * miniter (optional) = int. Minimum number of iterations for quadrature.
+            * maxiter (optional) = int. Maximum number of iterations for quadrature.
+            * tol (optional) = int. Error tolerance before breaking numerical integration.
             * l = int. The multipole of \Delta C_l
     """
     print('Working on l={}'.format(l))
@@ -454,19 +465,22 @@ def additive_bias_at_l(exp, l):
 
         result, error = quadrature(integrand_additive_term, exp.chi_min_int,
                                              exp.chi_max_int, args=(Clchi1chi2_interp, exp.chi_min_int, exp.chi_max_int),
-                                             miniter=3, maxiter=5, tol=1e-20)
+                                             miniter=miniter, maxiter=maxiter, tol=tol)
     except IndexError as e:
         print(f"{e}")
         print('Setting the result to 0 because ClDeltaphi ought to be 0 at this l')
         result = 0
     return result
 
-def unbiased_term(exp, ells, parallelize=False):
+def unbiased_term(exp, ells, parallelize=False, miniter=1000, maxiter=2000, tol=1e-12):
     """ Calculate the unbiased contribution to the galaxy clustering power spectrum in the Limber approximation
         - Inputs:
             * exp = an instance of the experiment class
             * ells = np array of ints. The ells at which to evaluate this bias
             * parallelize (optional) = Bool. Whether or not to use multiprocessing to evaluate
+            * miniter (optional) = int. Minimum number of iterations for quadrature.
+            * maxiter (optional) = int. Maximum number of iterations for quadrature.
+            * tol (optional) = int. Error tolerance before breaking numerical integration.
     """
     if parallelize:
         # Use multiprocessing to speed up calculation
@@ -478,27 +492,30 @@ def unbiased_term(exp, ells, parallelize=False):
             num_processes = len(ells)
         print('Running in parallel with {} processes'.format(num_processes))
         # Helper function (pool.map can only take one, iterable input)
-        func = partial(unbiased_term_at_l, exp)
+        func = partial(unbiased_term_at_l, exp, miniter, maxiter, tol)
         clgg_unbiased = np.array(pool.map(func, ells))
         pool.close()
     else:
         clgg_unbiased = np.zeros_like(ells, dtype=float)
         for i, l in enumerate(ells):
-            clgg_unbiased[i] = unbiased_term_at_l(exp, l)
+            clgg_unbiased[i] = unbiased_term_at_l(exp, miniter, maxiter, tol, l)
     return clgg_unbiased
 
-def unbiased_term_at_l(exp, l):
+def unbiased_term_at_l(exp, miniter, maxiter, tol, l):
     """ Calculate the unbiased contribution to the galaxy clustering power spectrum in the Limber approximation
         at a specific l.
         - Inputs:
             * exp = an instance of the experiment class
+            * miniter (optional) = int. Minimum number of iterations for quadrature.
+            * maxiter (optional) = int. Maximum number of iterations for quadrature.
+            * tol (optional) = int. Error tolerance before breaking numerical integration.
             * l = int. The multipole of \Delta C_l
     """
     print('Working on l={}'.format(l))
     X, Y = np.meshgrid((l + 0.5) / exp.chi_array, exp.chi_array, indexing='ij')
     Pkgg_interp_1D = interp1d(exp.chi_array, np.diagonal(exp.Pkgg_interp((X, Y))))
     result, error = quadrature(integrand_unbiased_auto_term, exp.chi_min_int, exp.chi_max_int,
-                                         args=(Pkgg_interp_1D), miniter=1000, maxiter=2000, tol=1e-12)
+                                         args=(Pkgg_interp_1D), miniter=miniter, maxiter=maxiter, tol=tol)
     return result
 
 #
