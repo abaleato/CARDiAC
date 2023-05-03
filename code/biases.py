@@ -447,13 +447,18 @@ def additive_bias_at_l(exp, l):
             * l = int. The multipole of \Delta C_l
     """
     print('Working on l={}'.format(l))
-    Clchi1chi2_interp = interpolate.RegularGridInterpolator((exp.chi_array, exp.chi_array),
-                                                            exp.Cl_deltap_of_chi1_chi2[l, :, :],
-                                                            method='linear', bounds_error=False, fill_value=0)
+    try:
+        Clchi1chi2_interp = interpolate.RegularGridInterpolator((exp.chi_array, exp.chi_array),
+                                                                exp.Cl_deltap_of_chi1_chi2[l, :, :],
+                                                                method='linear', bounds_error=True, fill_value=0)
 
-    result, error = quadrature(integrand_additive_term, exp.chi_min_int,
-                                         exp.chi_max_int, args=(Clchi1chi2_interp, exp.chi_min_int, exp.chi_max_int),
-                                         miniter=3, maxiter=5, tol=1e-20)
+        result, error = quadrature(integrand_additive_term, exp.chi_min_int,
+                                             exp.chi_max_int, args=(Clchi1chi2_interp, exp.chi_min_int, exp.chi_max_int),
+                                             miniter=3, maxiter=5, tol=1e-20)
+    except: IndexError as e:
+        print(f"{e}")
+        print('Setting the result to 0 because ClDeltaphi ought to be 0 at this l')
+        result = 0
     return result
 
 def unbiased_term(exp, ells, parallelize=False):
