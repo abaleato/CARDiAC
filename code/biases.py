@@ -512,6 +512,15 @@ class dummy_class(object):
     def __init__(self):
         print('Initialized empty object')
 
+    def save_properties(self, output_filename='./dict_with_properties'):
+        """
+        Save the dictionary of key properties to file
+        Inputs:
+            * output_filename = str. Output filename
+        """
+        with open(output_filename+'.pkl', 'wb') as output:
+            pickle.dump(self.__dict__, output, pickle.HIGHEST_PROTOCOL)
+
 def load_from_file(filename='./dict_with_properties'):
     """
     Load a dictionary of the key properties. Must have previously been save  experiment.save_properties()
