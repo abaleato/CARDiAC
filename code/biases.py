@@ -128,15 +128,15 @@ class experiment:
             # Smooth the map to reduce ringing due to the hard edges of the big pixels
             delta_p_lm_of_chi[:, i] = hp.almxfl(delta_p_lm_of_chi[:, i], beam)
 
-        lmax = hp.Alm.getlmax(delta_p_lm_of_chi.shape[0])
-        self.Cl_deltap_of_chi1_chi2 = np.zeros((lmax + 1, n_samples_of_chi, n_samples_of_chi))
-        pixwinf = hp.pixwin(nside_upsampling)[0:lmax + 1]  # Get the pixel window function for the up-sampled pixelization
+        self.lmax = hp.Alm.getlmax(delta_p_lm_of_chi.shape[0])
+        self.Cl_deltap_of_chi1_chi2 = np.zeros((self.lmax + 1, n_samples_of_chi, n_samples_of_chi))
+        pixwinf = hp.pixwin(nside_upsampling)[0:self.lmax + 1]  # Get the pixel window function for the up-sampled pixelization
 
         for i in range(delta_p_lm_of_chi.shape[0]):
             if i % 1000 == 0:
                 # Print progress
                 print('Completed {}%'.format(round(100 * i / delta_p_lm_of_chi.shape[0]), 3))
-            l, m = hp.Alm.getlm(lmax, i)  # Get the l corresponding to each value of m
+            l, m = hp.Alm.getlm(self.lmax, i)  # Get the l corresponding to each value of m
             if m != 0:
                 # Healpix indexes only m (not -m, since Ylm=Yl-m for a real field), so correct the sum for this
                 factor = 2
@@ -199,11 +199,11 @@ class experiment:
         plt.xlabel(r'$z$')
         plt.show()
 
-    def plot_ClDphi_of_chi(self, lmax=300):
+    def plot_ClDphi_of_chi(self):
         '''
         Plot C_l^{\Delta \phi}(\chi,\chi) vs \mathrm{log}_{10}\,\chi for various l's
         '''
-        for l_to_plot in np.linspace(10, lmax, 8, dtype=int):
+        for l_to_plot in np.linspace(10, self.lmax, 8, dtype=int):
             plt.plot(self.chi_array, np.diagonal(self.Cl_deltap_of_chi1_chi2, axis1=1, axis2=2)[l_to_plot, :],
                      label=r'$l={}$'.format(l_to_plot))
         plt.axvline(self.chi_mean_fid, ls='--', color='k', label=r'$r=\chi(z_{\mathrm{mean}})$')
@@ -213,11 +213,11 @@ class experiment:
         plt.xlim([1, 5000])
         plt.show()
 
-    def plot_ClDphi_of_chi_2D(self, lmax=300):
+    def plot_ClDphi_of_chi_2D(self):
         '''
         Plot log C_l^{\Delta \phi}(\chi,\chi) against l and  \mathrm{log}_{10}\,\chi
         '''
-        X, Y = np.meshgrid(np.arange(len(self.chi_array)), np.arange(lmax + 1))
+        X, Y = np.meshgrid(np.arange(len(self.chi_array)), np.arange(self.lmax + 1))
         Z = np.log10(np.diagonal(self.Cl_deltap_of_chi1_chi2, axis1=1, axis2=2))
         # Set the log of 0 to a tiny negative number
         Z[np.diagonal(self.Cl_deltap_of_chi1_chi2, axis1=1, axis2=2) == 0] = -1e100
@@ -231,7 +231,7 @@ class experiment:
         ax = plt.gca()
         ax.axvline(np.where(self.chi_array > self.chi_mean_fid)[0][0], color='r', ls='--', lw=1,
                    label=r'$r=\chi(z_{\mathrm{mean}})$')
-        ax.set_ylim([0, lmax])
+        ax.set_ylim([0, self.lmax])
 
         plt.xlabel(r'$\mathrm{log}_{10}\,\chi$')
         plt.ylabel(r'$l$')
@@ -245,12 +245,12 @@ class experiment:
         plt.colorbar(location='right')
         plt.show()
 
-    def plot_ClDphi_of_chi_chiprime_2D(self, lmax=300):
+    def plot_ClDphi_of_chi_chiprime_2D(self):
         '''
         Plot log |C_l^{\Delta \phi}(\chi,\chi')| against l and  \mathrm{log}_{10}\,\chi
         '''
         chi_idx = np.where(np.log10(self.chi_array) > 3.2)[0][0]
-        X, Y = np.meshgrid(np.arange(len(self.chi_array)), np.arange(lmax + 1))
+        X, Y = np.meshgrid(np.arange(len(self.chi_array)), np.arange(self.lmax + 1))
 
         Z_fixed_chi = np.log10(np.abs(self.Cl_deltap_of_chi1_chi2[:, :, chi_idx]))
         # Set the log of 0 to a tiny negative number
@@ -269,7 +269,7 @@ class experiment:
         ax.axvline(np.where(self.chi_array > self.chi_mean_fid)[0][0], color='r', ls='--', lw=1,
                    label=r'$r=r(z_{\mathrm{mean}})$')
 
-        ax.set_ylim([0, lmax])
+        ax.set_ylim([0, self.lmax])
 
         label_locs = np.arange(1000, 7000, 1000, dtype=int)
         ax.set_xticks(utils.find_closest_indices(self.chi_array, label_locs))
