@@ -496,9 +496,16 @@ def unbiased_term_at_l(exp, l):
                                          args=(Pkgg_interp_1D), miniter=1000, maxiter=2000, tol=1e-12)
     return result
 
-class A(object):
+#
+# Loading an experiment from file
+#
+
+class dummy_class(object):
+    '''
+    A dummy class to initialize an empty object and populate it with the desired dictionary loaded from file
+    '''
     def __init__(self):
-        print('Initialized emptyo object')
+        print('Initialized empty object')
 
 def load_from_file(filename='./dict_with_properties.pkl'):
     """
