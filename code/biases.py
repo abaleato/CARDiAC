@@ -496,6 +496,10 @@ def unbiased_term_at_l(exp, l):
                                          args=(Pkgg_interp_1D), miniter=1000, maxiter=2000, tol=1e-12)
     return result
 
+class A(object):
+    def __init__(self):
+        print('Initialized emptyo object')
+
 def load_from_file(filename='./dict_with_properties.pkl'):
     """
     Load a dictionary of the key properties. Must have previously been save  experiment.save_properties()
@@ -508,9 +512,6 @@ def load_from_file(filename='./dict_with_properties.pkl'):
         experiment_dict = pickle.load(input)
     print('Successfully loaded experiment object with properties:\n')
 
-    class A(object):
-        def __init__(self):
-            print('Initialized emptyo object')
     dummy_object = A()
     dummy_object.__dict__ = experiment_dict
     return dummy_object
