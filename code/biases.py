@@ -512,7 +512,7 @@ class dummy_class(object):
     def __init__(self):
         print('Initialized empty object')
 
-def load_from_file(filename='./dict_with_properties.pkl'):
+def load_from_file(filename='./dict_with_properties'):
     """
     Load a dictionary of the key properties. Must have previously been save  experiment.save_properties()
     Inputs:
@@ -520,7 +520,7 @@ def load_from_file(filename='./dict_with_properties.pkl'):
     Returns:
         * A dummy object with the right attributes
     """
-    with open(filename, 'rb') as input:
+    with open(filename+'.pkl', 'rb') as input:
         experiment_dict = pickle.load(input)
     print('Successfully loaded experiment object with properties:\n')
 
