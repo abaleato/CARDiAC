@@ -436,7 +436,7 @@ def additive_bias(exp, ells, parallelize=False):
     else:
         additive_bias = np.zeros_like(ells, dtype=float)
         for i, l in enumerate(ells):
-            additive_bias[i], error = additive_bias_at_l(exp, l)
+            additive_bias[i] = additive_bias_at_l(exp, l)
     return additive_bias
 
 def additive_bias_at_l(exp, l):
