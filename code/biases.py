@@ -94,7 +94,7 @@ class experiment:
         self.phi_perturbed_array *= phi_norm ** (-1)
         self.phi_fid_array *= phi_norm ** (-1)
         dndz_fid_normed = dndz_fid / phi_norm
-        phi_fid = interp1d(self.chi_array, self.phi_fid_array)
+        self.phi_fid = interp1d(self.chi_array, self.phi_fid_array)
 
         # Extract the perturbation
         self.delta_p_maps = self.phi_perturbed_array - self.phi_fid_array
@@ -499,7 +499,7 @@ def unbiased_term_at_l(exp, miniter, maxiter, tol, l):
     X, Y = np.meshgrid((l + 0.5) / exp.chi_array, exp.chi_array, indexing='ij')
     Pkgg_interp_1D = interp1d(exp.chi_array, np.diagonal(exp.Pkgg_interp((X, Y))))
     result, error = quadrature(integrand_unbiased_auto_term, exp.chi_min_int, exp.chi_max_int,
-                                         args=(Pkgg_interp_1D), miniter=miniter, maxiter=maxiter, tol=tol)
+                                         args=(exp.phi_fid, Pkgg_interp_1D), miniter=miniter, maxiter=maxiter, tol=tol)
     return result
 
 #
