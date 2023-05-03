@@ -13,6 +13,7 @@ import utils
 import galaxy_ps
 import multiprocessing
 from functools import partial
+import pickle
 
 class experiment:
     def __init__(self, sigma, z_mean, sigma_zshift, sigma_zwidth, nside, bvec, z_min_int=0.005, z_max_int = None,
