@@ -199,6 +199,21 @@ class experiment:
         plt.xlabel(r'$z$')
         plt.show()
 
+    def plot_DeltaPhi_variance(self):
+        '''
+        Plot the perturbation variance as a function of distance
+        '''
+        plt.axhline(0, color='gray', lw=0.5)
+        plt.axvline(self.chi_mean_fid, color='k', ls='--')
+
+        variance_at_distance_slice = np.zeros(len(self.chi_array))
+        for i, chi in enumerate(self.chi_array):
+            variance_at_distance_slice[i] = np.var(self.delta_p_maps[:, i])
+        plt.plot(self.chi_array, variance_at_distance_slice)
+        plt.ylabel(r'Var[$\Delta \phi(\chi)$] [Mpc$^{-2}$]')
+        plt.xlabel(r'$\chi$ [Mpc]')
+        plt.show()
+
     def plot_ClDphi_of_chi(self):
         '''
         Plot C_l^{\Delta \phi}(\chi,\chi) vs \mathrm{log}_{10}\,\chi for various l's
