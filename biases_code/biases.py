@@ -107,6 +107,11 @@ class experiment:
 
         delta_p_maps = delta_p_maps_upsampled
 
+        # Get the variance of Dphi in each slice -- from this we can directly calculate mode-coupling biases at large l
+        self.variance_at_distance_slice = np.zeros(len(self.chi_array))
+        for i, chi in enumerate(self.chi_array):
+            self.variance_at_distance_slice[i] = np.var(self.delta_p_maps[:, i])
+
         # To avoid ringing due to the hard edges on which we seed the anisotropy, we smooth the maps with a Gaussian
         # with sigma equal to 1/2 of the typical width one of the big pixels (characterized by nside, not nside_upsampling)
         sigma_gaussian_smoothing = np.sqrt(4 * np.pi / self.npix) / 2. * (360 * 60 / (2 * np.pi))  # in arcmin
@@ -197,6 +202,17 @@ class experiment:
         plt.plot(self.z_array[pix_idx, :], self.delta_p_maps[pix_idx, :])
         plt.ylabel(r'$\Delta \phi(z)$')
         plt.xlabel(r'$z$')
+        plt.show()
+
+    def plot_DeltaPhi_variance(self):
+        '''
+        Plot the perturbation variance as a function of distance
+        '''
+        plt.axhline(0, color='gray', lw=0.5)
+        plt.axvline(self.chi_mean_fid, color='k', ls='--')
+        plt.plot(self.chi_array, self.variance_at_distance_slice)
+        plt.ylabel(r'Var[$\Delta \phi(\chi)$] [Mpc$^{-2}$]')
+        plt.xlabel(r'$\chi$ [Mpc]')
         plt.show()
 
     def plot_ClDphi_of_chi(self):
@@ -358,7 +374,7 @@ def integrand_unbiased_auto_term(chi, phi_fid, Pkgg_interp_1D):
 # Integral evaluations
 #
 
-def mode_coupling_bias(exp, ells, lprime_max=100, num_processes=1, miniter=1000, maxiter=2000, tol=1e-12):
+def mode_coupling_bias(exp, ells, lprime_max=100, num_processes=1, miniter=1000, maxiter=2000, tol=1e-12, analytic=False):
     """ Calculate the mode-coupling bias to the galaxy clustering power spectrum in the Limber approximation
         - Inputs:
             * exp = an instance of the experiment class
@@ -368,19 +384,26 @@ def mode_coupling_bias(exp, ells, lprime_max=100, num_processes=1, miniter=1000,
             * miniter (optional) = int. Minimum number of iterations for quadrature.
             * maxiter (optional) = int. Maximum number of iterations for quadrature.
             * tol (optional) = int. Error tolerance before breaking numerical integration.
+            * analytic (optional) = Bool. If True, use the analytic expression (valid for l\gg1) which uses the
+                                          variance of Dphi at \chi. If False, do the full calc (still assumes Limber)
     """
+    if analytic:
+        integral_at_l = analytic_mode_coupling_bias_at_l
+    else:
+        integral_at_l = mode_coupling_bias_at_l
+
     if num_processes>1:
         # Use multiprocessing to speed up calculation
         print('Running in parallel with {} processes'.format(num_processes))
         pool = multiprocessing.Pool(num_processes)
         # Helper function (pool.map can only take one, iterable input)
-        func = partial(mode_coupling_bias_at_l, exp, lprime_max, miniter, maxiter, tol)
+        func = partial(integral_at_l, exp, lprime_max, miniter, maxiter, tol)
         conv_bias = np.array(pool.map(func, ells))
         pool.close()
     else:
         conv_bias = np.zeros_like(ells, dtype=float)
         for i, l in enumerate(ells):
-            conv_bias[i] = mode_coupling_bias_at_l(exp, lprime_max, miniter, maxiter, tol, l)
+            conv_bias[i] = integral_at_l(exp, lprime_max, miniter, maxiter, tol, l)
     return conv_bias
 
 def mode_coupling_bias_at_l(exp, lprime_max, miniter, maxiter, tol, l):
@@ -411,6 +434,20 @@ def mode_coupling_bias_at_l(exp, lprime_max, miniter, maxiter, tol, l):
                                           maxiter=maxiter, tol=tol)
                 result += integ
     return result
+
+def analytic_mode_coupling_bias_at_l(exp, dummy1, dummy2, dummy3, dummy4, l):
+    """ Calculate the mode-coupling bias to the galaxy clustering power spectrum in the Limber approximation,
+        at a specific l (l \gg 1 for this approach to be valid), using the variance of \Delta Phi in each chi slice
+        - Inputs:
+            * exp = an instance of the experiment class
+            * dummy1-4 = whatever. We don't actually need this, but we have them in order to match the code structure
+            * l = int. The multipole of \Delta C_l
+    """
+    print('Working on l={}'.format(l))
+    # Interpolate at the scales required by Limber
+    X, Y = np.meshgrid((l + 0.5) / exp.chi_array, exp.chi_array, indexing='ij')
+    Pkgg_interp_1D = interp1d(exp.chi_array, np.diagonal(exp.Pkgg_interp((X, Y))))
+    return np.trapz(Pkgg_interp_1D(exp.chi_array) * exp.variance_at_distance_slice, exp.chi_array)
 
 def additive_bias(exp, ells, num_processes=1, miniter=1000, maxiter=2000, tol=1e-12):
     """ Calculate the mode-coupling bias to the galaxy clustering power spectrum
