@@ -437,19 +437,32 @@ def mode_coupling_bias_at_l(exp, lprime_max, miniter, maxiter, tol, l):
                 result += integ
     return result
 
-def analytic_mode_coupling_bias_at_l(exp, dummy1, dummy2, dummy3, dummy4, l):
+def analytic_mode_coupling_bias_at_l(exp, dummy, miniter, maxiter, tol, l):
     """ Calculate the mode-coupling bias to the galaxy clustering power spectrum in the Limber approximation,
         at a specific l (l \gg 1 for this approach to be valid), using the variance of \Delta Phi in each chi slice
         - Inputs:
             * exp = an instance of the experiment class
-            * dummy1-4 = whatever. We don't actually need this, but we have them in order to match the code structure
+            * dummy = whatever. We don't actually need this, but we have them in order to match the code structure
+            * miniter (optional) = int. Minimum number of iterations for quadrature.
+            * maxiter (optional) = int. Maximum number of iterations for quadrature.
+            * tol (optional) = int. Error tolerance before breaking numerical integration.
             * l = int. The multipole of \Delta C_l
     """
     print('Working on l={}'.format(l))
     # Interpolate at the scales required by Limber
     X, Y = np.meshgrid((l + 0.5) / exp.chi_array, exp.chi_array, indexing='ij')
     Pkgg_interp_1D = interp1d(exp.chi_array, np.diagonal(exp.Pkgg_interp((X, Y))))
-    return np.trapz(Pkgg_interp_1D(exp.chi_array) * exp.analytic_proj_kernel, exp.chi_array)
+    result, error = quadrature(integrand_conv_bias_via_var, exp.chi_min_int,
+                                             exp.chi_max_int, args=(Pkgg_interp_1D, exp.analytic_proj_kernel),
+                                             miniter=miniter, maxiter=maxiter, tol=tol)
+    return result
+
+def integrand_conv_bias_via_var(chi, Pkgg_interp_1D, var):
+    '''
+    Integrand for the mode-coupling bias in the limit ell>>1 where the kernel in the
+    Limber integral reduces to <|\Delta \phi(\chi)|^2>/\chi^2
+    '''
+    return var(chi)/chi**2 * Pkgg_interp_1D(chi)
 
 def additive_bias(exp, ells, num_processes=1, miniter=1000, maxiter=2000, tol=1e-12):
     """ Calculate the mode-coupling bias to the galaxy clustering power spectrum
