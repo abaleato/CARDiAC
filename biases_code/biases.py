@@ -457,12 +457,12 @@ def analytic_mode_coupling_bias_at_l(exp, dummy, miniter, maxiter, tol, l):
                                              miniter=miniter, maxiter=maxiter, tol=tol)
     return result
 
-def integrand_conv_bias_via_var(chi, Pkgg_interp_1D, var):
+def integrand_conv_bias_via_var(chi, Pkgg_interp_1D, kernel):
     '''
     Integrand for the mode-coupling bias in the limit ell>>1 where the kernel in the
     Limber integral reduces to <|\Delta \phi(\chi)|^2>/\chi^2
     '''
-    return var(chi)/chi**2 * Pkgg_interp_1D(chi)
+    return kernel(chi) * Pkgg_interp_1D(chi)
 
 def additive_bias(exp, ells, num_processes=1, miniter=1000, maxiter=2000, tol=1e-12):
     """ Calculate the mode-coupling bias to the galaxy clustering power spectrum
