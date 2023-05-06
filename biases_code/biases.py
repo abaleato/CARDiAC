@@ -111,8 +111,10 @@ class experiment:
         self.variance_at_distance_slice = np.zeros(len(self.chi_array))
         for i, chi in enumerate(self.chi_array):
             self.variance_at_distance_slice[i] = np.var(self.delta_p_maps[:, i])
-        # The kernel in Limber integral when approximating the mode-coupling bias in the limit l>>1
+        # The kernels in Limber integral when approximating the mode-coupling bias in the limit l>>1
         self.analytic_proj_kernel = interp1d(self.chi_array, self.variance_at_distance_slice/self.chi_array**2)
+        self.f = (self.chi_array - self.chi_mean_fid) * self.sigma_chishift / self.chi_sigma_fid ** 2 / np.sqrt(8 * np.pi)
+        self.analytic_kernel_toy_model = interp1d(self.chi_array, self.f ** 2 * self.phi_fid_array ** 2 /self.chi_array**2)
 
         # To avoid ringing due to the hard edges on which we seed the anisotropy, we smooth the maps with a Gaussian
         # with sigma equal to 1/2 of the typical width one of the big pixels (characterized by nside, not nside_upsampling)
@@ -376,7 +378,7 @@ def integrand_unbiased_auto_term(chi, phi_fid, Pkgg_interp_1D):
 # Integral evaluations
 #
 
-def mode_coupling_bias(exp, ells, lprime_max=100, num_processes=1, miniter=1000, maxiter=2000, tol=1e-12, analytic=False):
+def mode_coupling_bias(exp, ells, lprime_max=100, num_processes=1, miniter=1000, maxiter=2000, tol=1e-12, mode='full'):
     """ Calculate the mode-coupling bias to the galaxy clustering power spectrum in the Limber approximation
         - Inputs:
             * exp = an instance of the experiment class
@@ -386,13 +388,21 @@ def mode_coupling_bias(exp, ells, lprime_max=100, num_processes=1, miniter=1000,
             * miniter (optional) = int. Minimum number of iterations for quadrature.
             * maxiter (optional) = int. Maximum number of iterations for quadrature.
             * tol (optional) = int. Error tolerance before breaking numerical integration.
-            * analytic (optional) = Bool. If True, use the analytic expression (valid for l\gg1) which uses the
-                                          variance of Dphi at \chi. If False, do the full calc (still assumes Limber)
+            * mode (optional) = str. If 'full' do the full calc (still assumes Limber).
+                                    If 'analytic_via_variance' use analytic kernel \mathrm{Var}[\phi](\chi)
+                                    If 'analytic_toy_model' use analytic kernel [f(\chi)\bar{\phi}(\chi)]^2
     """
-    if analytic:
-        integral_at_l = analytic_mode_coupling_bias_at_l
-    else:
+    if mode=='full':
+        # Do the full calculation, using no analytic approximations
         integral_at_l = mode_coupling_bias_at_l
+    elif mode=='analytic_via_variance':
+        # Use the analytic approximation where the Limber kernel is \mathrm{Var}[\phi](\chi)
+        exp.mc_kernel = exp.analytic_proj_kernel
+        integral_at_l = analytic_mode_coupling_bias_at_l
+    elif mode=='analytic_toy_model':
+        # Use the analytic approximation where the Limber kernel is [f(\chi)\bar{\phi}(\chi)]^2
+        exp.mc_kernel = exp.analytic_kernel_toy_model
+        integral_at_l = analytic_mode_coupling_bias_at_l
 
     if num_processes>1:
         # Use multiprocessing to speed up calculation
@@ -453,7 +463,7 @@ def analytic_mode_coupling_bias_at_l(exp, dummy, miniter, maxiter, tol, l):
     X, Y = np.meshgrid((l + 0.5) / exp.chi_array, exp.chi_array, indexing='ij')
     Pkgg_interp_1D = interp1d(exp.chi_array, np.diagonal(exp.Pkgg_interp((X, Y))))
     result, error = quadrature(integrand_conv_bias_via_var, exp.chi_min_int,
-                                             exp.chi_max_int, args=(Pkgg_interp_1D, exp.analytic_proj_kernel),
+                                             exp.chi_max_int, args=(Pkgg_interp_1D, exp.mc_kernel),
                                              miniter=miniter, maxiter=maxiter, tol=tol)
     return result
 
