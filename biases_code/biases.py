@@ -111,6 +111,8 @@ class experiment:
         self.variance_at_distance_slice = np.zeros(len(self.chi_array))
         for i, chi in enumerate(self.chi_array):
             self.variance_at_distance_slice[i] = np.var(self.delta_p_maps[:, i])
+        # The kernel in Limber integral when approximating the mode-coupling bias in the limit l>>1
+        self.analytic_proj_kernel = interp1d(self.chi_array, self.variance_at_distance_slice/self.chi_array**2)
 
         # To avoid ringing due to the hard edges on which we seed the anisotropy, we smooth the maps with a Gaussian
         # with sigma equal to 1/2 of the typical width one of the big pixels (characterized by nside, not nside_upsampling)
@@ -447,7 +449,7 @@ def analytic_mode_coupling_bias_at_l(exp, dummy1, dummy2, dummy3, dummy4, l):
     # Interpolate at the scales required by Limber
     X, Y = np.meshgrid((l + 0.5) / exp.chi_array, exp.chi_array, indexing='ij')
     Pkgg_interp_1D = interp1d(exp.chi_array, np.diagonal(exp.Pkgg_interp((X, Y))))
-    return np.trapz(Pkgg_interp_1D(exp.chi_array) * exp.variance_at_distance_slice, exp.chi_array)
+    return np.trapz(Pkgg_interp_1D(exp.chi_array) * exp.analytic_proj_kernel, exp.chi_array)
 
 def additive_bias(exp, ells, num_processes=1, miniter=1000, maxiter=2000, tol=1e-12):
     """ Calculate the mode-coupling bias to the galaxy clustering power spectrum
