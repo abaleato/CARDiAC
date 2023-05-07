@@ -133,7 +133,6 @@ class experiment:
 
         self.lmax = hp.Alm.getlmax(delta_p_lm_of_chi.shape[0])
         self.Cl_deltap_of_chi1_chi2 = np.zeros((self.lmax + 1, n_samples_of_chi, n_samples_of_chi))
-        pixwinf = hp.pixwin(nside_upsampling)[0:self.lmax + 1]  # Get the pixel window function for the up-sampled pixelization
 
         for i in range(delta_p_lm_of_chi.shape[0]):
             if i % 1000 == 0:
@@ -147,8 +146,7 @@ class experiment:
                 factor = 1
             # Get angular PS and deconvolve pixel window function for all possible combinations of chi1 and chi2
             self.Cl_deltap_of_chi1_chi2[l, :, :] += factor * np.outer(delta_p_lm_of_chi[i, :],
-                                                                 np.conj(delta_p_lm_of_chi[i, :])).real / (2 * l + 1) / \
-                                               pixwinf[l] ** 2
+                                                                 np.conj(delta_p_lm_of_chi[i, :])).real / (2 * l + 1) 
 
         # We'll need the interpolated version of this
         self.cldp_interp = interp1d(self.chi_array, np.diagonal(self.Cl_deltap_of_chi1_chi2, axis1=1, axis2=2), axis=-1)
