@@ -17,7 +17,7 @@ import pickle
 
 class experiment:
     def __init__(self, sigma, z_mean, sigma_zshift, sigma_zwidth, nside, bvec, z_min_int=0.005, z_max_int = None,
-                 modulation_of_mean_of_draws=0, n_samples_of_chi=2**10, nside_upsampling=64, plots_dir='', k=None,
+                 modulation_of_mean_of_draws=0, n_samples_of_chi=2**10, nside_upsampling=128, plots_dir='', k=None,
                  smoothing_factor = 0):
         """ Initialise a cosmology and experimental charactierstics
             - Inputs:
