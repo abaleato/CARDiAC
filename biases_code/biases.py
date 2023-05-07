@@ -17,7 +17,8 @@ import pickle
 
 class experiment:
     def __init__(self, sigma, z_mean, sigma_zshift, sigma_zwidth, nside, bvec, z_min_int=0.005, z_max_int = None,
-                 modulation_of_mean_of_draws=0, n_samples_of_chi=2**10, nside_upsampling=64, plots_dir='', k=None):
+                 modulation_of_mean_of_draws=0, n_samples_of_chi=2**10, nside_upsampling=64, plots_dir='', k=None,
+                 smoothing_factor = 0.5):
         """ Initialise a cosmology and experimental charactierstics
             - Inputs:
                 * sigma = float. Standard deviation of the fiducial dndz
@@ -33,6 +34,7 @@ class experiment:
                 * nside_upsampling (optional) = int (a power of 2). nside of the upsampled pixelization
                 * plots_dir (optional) = str. Path to save any plots.
                 * k (optional) = np array of floats. k at which to evaluate Pkgg. If None, k = np.logspace(-3,0,200)
+                * smoothing_factor (optional)=float. Fraction of pixel width by which to smooth the injected anisotropy
         """
         self.sigma = sigma
         self.z_mean = z_mean
@@ -118,17 +120,8 @@ class experiment:
 
         # To avoid ringing due to the hard edges on which we seed the anisotropy, we smooth the maps with a Gaussian
         # with sigma equal to 1/2 of the typical width one of the big pixels (characterized by nside, not nside_upsampling)
-        sigma_gaussian_smoothing = np.sqrt(4 * np.pi / self.npix) / 2. * (360 * 60 / (2 * np.pi))  # in arcmin
-
-        def bl(fwhm_arcmin, lmax):
-            """ returns the map-level transfer function for a symmetric Gaussian beam.
-                 * fwhm_arcmin      = beam full-width-at-half-maximum (fwhm) in arcmin.
-                 * lmax             = maximum multipole.
-            """
-            ls = np.arange(0, lmax + 1)
-            return np.exp(-(fwhm_arcmin * np.pi / 180. / 60.) ** 2 / (16. * np.log(2.)) * ls * (ls + 1.))
-
-        beam = bl(sigma_gaussian_smoothing, 3 * nside_upsampling - 1)
+        sigma_gaussian_smoothing = self.smoothing_factor * np.sqrt(4 * np.pi / self.npix) * (360 * 60 / (2 * np.pi))  # in arcmin
+        beam = utils.bl(sigma_gaussian_smoothing, 3 * nside_upsampling - 1)
 
         # Take the spherical harmonic transform of each r slice. Conveniently, we can take complex SHT so array sizes reduce by x2
         delta_p_lm_of_chi = np.zeros((hp.Alm.getsize(3 * nside_upsampling - 1), n_samples_of_chi), dtype=complex)
