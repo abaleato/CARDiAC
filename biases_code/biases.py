@@ -18,7 +18,7 @@ import pickle
 class experiment:
     def __init__(self, sigma, z_mean, sigma_zshift, sigma_zwidth, nside, bvec, z_min_int=0.005, z_max_int = None,
                  modulation_of_mean_of_draws=0, n_samples_of_chi=2**10, nside_upsampling=64, plots_dir='', k=None,
-                 smoothing_factor = 0.5):
+                 smoothing_factor = 0):
         """ Initialise a cosmology and experimental charactierstics
             - Inputs:
                 * sigma = float. Standard deviation of the fiducial dndz
@@ -121,6 +121,7 @@ class experiment:
 
         # To avoid ringing due to the hard edges on which we seed the anisotropy, we smooth the maps with a Gaussian
         # with sigma equal to 1/2 of the typical width one of the big pixels (characterized by nside, not nside_upsampling)
+        # NOTE: this seems to be a bad idea, so default is to not smooth
         sigma_gaussian_smoothing = self.smoothing_factor * np.sqrt(4 * np.pi / self.npix) * (360 * 60 / (2 * np.pi))  # in arcmin
         beam = utils.bl(sigma_gaussian_smoothing, 3 * nside_upsampling - 1)
 
