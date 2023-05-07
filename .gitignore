@@ -3,6 +3,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+spatial_pz_bias_maps.ipynb
+
 *.pyc
 biases_code/ipynb_checkpoints/*
 biases_code/__pycache__/*
