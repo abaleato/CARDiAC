@@ -4,8 +4,8 @@ __pycache__/
 *$py.class
 
 *.pyc
-biases_code/ipynb_checkpoints*
-
+biases_code/ipynb_checkpoints/*
+biases_code/__pycache__/*
 .ipynb_checkpoints*
 
 github_key
