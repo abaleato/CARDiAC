@@ -396,6 +396,7 @@ def mode_coupling_bias(exp, ells, lprime_max=100, num_processes=1, miniter=1000,
         # Use the analytic approximation where the Limber kernel is [f(\chi)\bar{\phi}(\chi)]^2
         exp.mc_kernel = exp.analytic_kernel_toy_model
         integral_at_l = analytic_mode_coupling_bias_at_l
+    print('Using mode {}'.format(mode))
 
     if num_processes>1:
         # Use multiprocessing to speed up calculation
