@@ -50,6 +50,7 @@ class experiment:
         if k is None:
             k = np.logspace(-3,0,200)
         self.npix = hp.nside2npix(nside)
+        self.smoothing_factor = smoothing_factor
 
         # The user input is in redshift units because this is more intuitive. However, we will define our dndzs to be
         # Gaussian in comoving distance. So next, we convert to chi
