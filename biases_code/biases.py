@@ -111,9 +111,7 @@ class experiment:
         delta_p_maps = delta_p_maps_upsampled
 
         # Get the variance of Dphi in each slice -- from this we can directly calculate mode-coupling biases at large l
-        self.variance_at_distance_slice = np.zeros(len(self.chi_array))
-        for i, chi in enumerate(self.chi_array):
-            self.variance_at_distance_slice[i] = np.var(self.delta_p_maps[:, i])
+        self.variance_at_distance_slice = np.var(self.delta_p_maps, axis=0, ddof=1)
         # The kernels in Limber integral when approximating the mode-coupling bias in the limit l>>1
         self.analytic_proj_kernel = interp1d(self.chi_array, self.variance_at_distance_slice/self.chi_array**2)
         self.f = (self.chi_array - self.chi_mean_fid) * self.sigma_chishift / self.chi_sigma_fid ** 2 / np.sqrt(8 * np.pi)
