@@ -369,7 +369,7 @@ def integrand_unbiased_auto_term(chi, phi_fid, Pkgg_interp_1D):
 # Integral evaluations
 #
 
-def mode_coupling_bias(exp, ells, lprime_max=100, num_processes=1, miniter=1000, maxiter=2000, tol=1e-12, mode='full'):
+def mode_coupling_bias(exp, ells, lprime_max='none', num_processes=1, miniter=1000, maxiter=2000, tol=1e-12, mode='full'):
     """ Calculate the mode-coupling bias to the galaxy clustering power spectrum in the Limber approximation
         - Inputs:
             * exp = an instance of the experiment class
@@ -386,6 +386,8 @@ def mode_coupling_bias(exp, ells, lprime_max=100, num_processes=1, miniter=1000,
     if mode=='full':
         # Do the full calculation, using no analytic approximations
         integral_at_l = mode_coupling_bias_at_l
+        if lprime_max=='none':
+            lprime_max = exp.Cl_deltap_of_chi1_chi2.shape[0]-1
     elif mode=='analytic_via_variance':
         # Use the analytic approximation where the Limber kernel is \mathrm{Var}[\phi](\chi)
         exp.mc_kernel = exp.analytic_proj_kernel
