@@ -456,16 +456,12 @@ def analytic_mode_coupling_bias_at_l(exp, dummy, miniter, maxiter, tol, l):
     # Interpolate at the scales required by Limber
     X, Y = np.meshgrid((l + 0.5) / exp.chi_array, exp.chi_array, indexing='ij')
     Pkgg_interp_1D = interp1d(exp.chi_array, np.diagonal(exp.Pkgg_interp((X, Y))))
-    result, error = quadrature(integrand_conv_bias_via_var, exp.chi_min_int,
+    result, error = quadrature(limber_integral, exp.chi_min_int,
                                              exp.chi_max_int, args=(Pkgg_interp_1D, exp.mc_kernel),
                                              miniter=miniter, maxiter=maxiter, tol=tol)
     return result
 
-def integrand_conv_bias_via_var(chi, Pkgg_interp_1D, kernel):
-    '''
-    Integrand for the mode-coupling bias in the limit ell>>1 where the kernel in the
-    Limber integral reduces to <|\Delta \phi(\chi)|^2>/\chi^2
-    '''
+def limber_integral(chi, Pkgg_interp_1D, kernel):
     return kernel(chi) * Pkgg_interp_1D(chi)
 
 def additive_bias(exp, ells, num_processes=1, miniter=1000, maxiter=2000, tol=1e-12):
