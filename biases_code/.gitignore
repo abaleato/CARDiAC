@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+*.pyc
+*ipynb_checkpoints*
+
 # C extensions
 *.so
 
@@ -108,6 +111,9 @@ ipython_config.py
 #   in version control.
 #   https://pdm.fming.dev/#use-with-ide
 .pdm.toml
+
+
+
 
 # PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
 __pypackages__/
