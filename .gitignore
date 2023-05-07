@@ -4,7 +4,14 @@ __pycache__/
 *$py.class
 
 *.pyc
-*ipynb_checkpoints*
+biases_code/ipynb_checkpoints*
+
+.ipynb_checkpoints*
+
+github_key
+github_key.pub
+test.pdf
+__pycache__/
 
 # C extensions
 *.so
