@@ -417,18 +417,22 @@ def mode_coupling_bias_at_l(exp, lprime_max, miniter, maxiter, tol, l):
     """
     print('Working on l={}'.format(l))
     integrand = np.zeros_like(exp.chi_array)
-    for lprime in range(lprime_max):
-        for L in np.arange(np.abs(l - lprime), np.abs(l + lprime) + 1, 1):
-            if (l + lprime + L) % 2 == 0:
-                w3 = wigner_3j(l, L, lprime, 0, 0, 0)
-                prefactor = float(w3) ** 2 * (2 * lprime + 1) * (2 * L + 1) / (4 * np.pi)
-                # Interpolate at the scales required by Limber
-                X, Y = np.meshgrid((L + 0.5) / exp.chi_array, exp.chi_array, indexing='ij')
-                integrand += prefactor/ exp.chi_array**2 * np.diagonal(exp.Pkgg_interp((X, Y))) \
-                            * exp.cldp_interp(exp.chi_array)[lprime]
-
+    cldp_interp = exp.cldp_interp(exp.chi_array)
+    for L in range(l + lprime_max + 1):
+        abslmL = np.abs(l - L)
+        lpL = l + L
+        if abslmL <= lprime_max:
+            # Only loop if you will probe scales below cut
+            X, Y = np.meshgrid((L + 0.5) / exp.chi_array, exp.chi_array, indexing='ij')
+            Pk_interp = np.diagonal(exp.Pkgg_interp((X, Y)))
+            for lprime in np.arange(abslmL, min(lprime_max, lpL) + 1, 1):
+                if (l + lprime + L) % 2 == 0:
+                    w3 = wigner_3j(l, L, lprime, 0, 0, 0)
+                    prefactor = float(w3) ** 2 * (2 * lprime + 1) * (2 * L + 1) / (4 * np.pi)
+                    integrand += prefactor / exp.chi_array ** 2 * Pk_interp * cldp_interp[lprime]
     f = interp1d(exp.chi_array, integrand)
     result, error = quadrature(f, exp.chi_min_int, exp.chi_max_int, miniter=miniter, maxiter=maxiter, tol=tol)
+    print('Done with l={}'.format(l))
     return result
 
 def analytic_mode_coupling_bias_at_l(exp, dummy, miniter, maxiter, tol, l):
