@@ -157,7 +157,7 @@ class experiment:
         self.Pkgg = galaxy_ps.get_galaxy_ps(bvec, k, zs_sampled)
         # Interpolate
         # Note: scipy.interp2d is deprecated, but it is MUCH faster than the new alternatives...
-        self.Pkgg_interp = interpolate.interp2d(chis_sampled, k self.Pkgg,
+        self.Pkgg_interp = interpolate.interp2d(chis_sampled, k, self.Pkgg,
                                                           kind='linear', bounds_error=False, fill_value=0)
 
     def save_properties(self, output_filename='./dict_with_properties'):
