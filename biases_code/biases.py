@@ -432,7 +432,6 @@ def mode_coupling_bias_at_l(exp, lprime_max, miniter, maxiter, tol, l):
                     integrand += prefactor / exp.chi_array ** 2 * Pk_interp * cldp_interp[lprime]
     f = interp1d(exp.chi_array, integrand)
     result, error = quadrature(f, exp.chi_min_int, exp.chi_max_int, miniter=miniter, maxiter=maxiter, tol=tol)
-    print('Done with l={}'.format(l))
     return result
 
 def analytic_mode_coupling_bias_at_l(exp, dummy, miniter, maxiter, tol, l):
