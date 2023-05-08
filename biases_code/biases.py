@@ -7,7 +7,7 @@ from scipy.ndimage.filters import gaussian_filter
 import astropy.units as u
 from scipy import interpolate
 from scipy.interpolate import interp1d
-from py3nj import wigner_3j
+from py3nj import wigner3j
 from scipy.integrate import quadrature
 import utils
 import galaxy_ps
@@ -427,7 +427,7 @@ def mode_coupling_bias_at_l(exp, lprime_max, miniter, maxiter, tol, l):
             Pk_interp = np.diagonal(exp.Pkgg_interp((X, Y)))
             for lprime in np.arange(abslmL, min(lprime_max, lpL) + 1, 1):
                 if (l + lprime + L) % 2 == 0:
-                    w3 = wigner_3j(2*l, 2*L, 2*lprime, 0, 0, 0)
+                    w3 = wigner3j(2*l, 2*L, 2*lprime, 0, 0, 0)
                     prefactor = w3 ** 2 * (2 * lprime + 1) * (2 * L + 1) / (4 * np.pi)
                     integrand += prefactor / exp.chi_array ** 2 * Pk_interp * cldp_interp[lprime]
     f = interp1d(exp.chi_array, integrand)
