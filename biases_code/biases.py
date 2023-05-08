@@ -335,14 +335,6 @@ class experiment:
 # Integrands
 #
 
-def integrand_conv_term(chi, small_l, Pkgg_interp_1Dlimber, prefactor, cldp_interp):
-    '''
-    Integrand for the convolutional bias term in the Limber approximation.
-    Requires globally-defined cldp_interp(k)[l], interpolated in k
-    Pkgg_interp_1Dlimber = interp1d(chi_array, Pkgg( (L+0.5)/chi_array, z(chi_array) ))
-    '''
-    return prefactor/ chi**2 * Pkgg_interp_1Dlimber(chi) * cldp_interp(chi)[small_l]
-
 def integrand_additive_term(chi1, Clchi1chi2_interp, chi_min_int, chi_max_int):
     '''
     Integrand for the additive bias term, in the Limber approximation.
@@ -424,21 +416,19 @@ def mode_coupling_bias_at_l(exp, lprime_max, miniter, maxiter, tol, l):
             * l = int. The multipole of \Delta C_l
     """
     print('Working on l={}'.format(l))
-    result = 0
+    integrand = np.zeros_like(exp.chi_array)
     for lprime in range(lprime_max):
         for L in np.arange(np.abs(l - lprime), np.abs(l + lprime) + 1, 1):
             if (l + lprime + L) % 2 == 0:
                 w3 = wigner_3j(l, L, lprime, 0, 0, 0)
                 prefactor = float(w3) ** 2 * (2 * lprime + 1) * (2 * L + 1) / (4 * np.pi)
-
                 # Interpolate at the scales required by Limber
                 X, Y = np.meshgrid((L + 0.5) / exp.chi_array, exp.chi_array, indexing='ij')
-                Pkgg_interp_1D = interp1d(exp.chi_array, np.diagonal(exp.Pkgg_interp((X, Y))))
+                integrand += prefactor/ exp.chi_array**2 * np.diagonal(exp.Pkgg_interp((X, Y))) \
+                            * exp.cldp_interp(exp.chi_array)[lprime]
 
-                integ, error = quadrature(integrand_conv_term, exp.chi_min_int, exp.chi_max_int,
-                                          args=(lprime, Pkgg_interp_1D, prefactor, exp.cldp_interp), miniter=miniter,
-                                          maxiter=maxiter, tol=tol)
-                result += integ
+    f = interp1d(exp.chi_array, integrand)
+    result, error = quadrature(f, exp.chi_min_int, exp.chi_max_int, miniter=miniter, maxiter=maxiter, tol=tol)
     return result
 
 def analytic_mode_coupling_bias_at_l(exp, dummy, miniter, maxiter, tol, l):
