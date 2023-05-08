@@ -156,8 +156,9 @@ class experiment:
         chis_sampled = Planck18.comoving_distance(zs_sampled).value
         self.Pkgg = galaxy_ps.get_galaxy_ps(bvec, k, zs_sampled)
         # Interpolate
-        self.Pkgg_interp = interpolate.RegularGridInterpolator((k, chis_sampled), self.Pkgg,
-                                                          method='linear', bounds_error=False, fill_value=0)
+        # Note: scipy.interp2d is deprecated, but it is MUCH faster than the new alternatives...
+        self.Pkgg_interp = interpolate.interp2d(chis_sampled, k self.Pkgg,
+                                                          kind='linear', bounds_error=False, fill_value=0)
 
     def save_properties(self, output_filename='./dict_with_properties'):
         """
@@ -423,8 +424,7 @@ def mode_coupling_bias_at_l(exp, lprime_max, miniter, maxiter, tol, l):
         lpL = l + L
         if abslmL <= lprime_max:
             # Only loop if you will probe scales below cut
-            X, Y = np.meshgrid((L + 0.5) / exp.chi_array, exp.chi_array, indexing='ij')
-            Pk_interp = np.diagonal(exp.Pkgg_interp((X, Y)))
+            Pk_interp = np.diagonal(np.flipud(exp.Pkgg_interp(exp.chi_array, (L + 0.5) / exp.chi_array)))
             for lprime in np.arange(abslmL, min(lprime_max, lpL) + 1, 1):
                 if (l + lprime + L) % 2 == 0:
                     w3 = wigner3j(2*l, 2*L, 2*lprime, 0, 0, 0)
@@ -448,8 +448,8 @@ def analytic_mode_coupling_bias_at_l(exp, dummy, miniter, maxiter, tol, l):
     """
     print('Working on l={}'.format(l))
     # Interpolate at the scales required by Limber
-    X, Y = np.meshgrid((l + 0.5) / exp.chi_array, exp.chi_array, indexing='ij')
-    Pkgg_interp_1D = interp1d(exp.chi_array, np.diagonal(exp.Pkgg_interp((X, Y))))
+    Pkgg_interp_1D = interp1d(exp.chi_array, np.diagonal(np.flipud(exp.Pkgg_interp(exp.chi_array,
+                                                                                   (l + 0.5) / exp.chi_array))))
     result, error = quadrature(limber_integral, exp.chi_min_int,
                                              exp.chi_max_int, args=(Pkgg_interp_1D, exp.mc_kernel),
                                              miniter=miniter, maxiter=maxiter, tol=tol)
@@ -542,8 +542,8 @@ def unbiased_term_at_l(exp, miniter, maxiter, tol, l):
             * l = int. The multipole of \Delta C_l
     """
     print('Working on l={}'.format(l))
-    X, Y = np.meshgrid((l + 0.5) / exp.chi_array, exp.chi_array, indexing='ij')
-    Pkgg_interp_1D = interp1d(exp.chi_array, np.diagonal(exp.Pkgg_interp((X, Y))))
+    Pkgg_interp_1D = interp1d(exp.chi_array, np.diagonal(np.flipud(exp.Pkgg_interp(exp.chi_array,
+                                                                                   (l + 0.5) / exp.chi_array))))
     result, error = quadrature(integrand_unbiased_auto_term, exp.chi_min_int, exp.chi_max_int,
                                          args=(exp.phi_fid, Pkgg_interp_1D), miniter=miniter, maxiter=maxiter, tol=tol)
     return result
