@@ -577,7 +577,7 @@ def load_from_file(filename='./dict_with_properties', verbose=False):
     """
     with open(filename+'.pkl', 'rb') as input:
         experiment_dict = pickle.load(input)
-    verbose:
+    if verbose:
         print('Successfully loaded experiment object with properties:\n')
         print(experiment_dict)
 
