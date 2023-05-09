@@ -16,25 +16,27 @@ from functools import partial
 import pickle
 
 class experiment:
-    def __init__(self, sigma, z_mean, sigma_zshift, sigma_zwidth, nside, bvec, z_min_int=0.005, z_max_int = None,
-                 modulation_of_mean_of_draws=0, n_samples_of_chi=2**10, nside_upsampling=128, plots_dir='', k=None,
-                 smoothing_factor = 0):
+    def __init__(self, sigma, z_mean, sigma_zshift, sigma_zwidth, zmean_shifts_array, sigma_shifts_array, bvec,
+                 z_min_int=0.005, z_max_int = None, n_samples_of_chi=2**10, nside_upsampling=128, plots_dir='', k=None,
+                 smoothing_factor = 0, n_samples_of_chi=2**10):
         """ Initialise a cosmology and experimental charactierstics
             - Inputs:
                 * sigma = float. Standard deviation of the fiducial dndz
                 * z_mean = float. Central redshift of the fiducial dndz
                 * sigma_zshift = float. Standard deviation of the shifts in the central redshift of the distribution
                 * sigma_zwidth = float. Standard deviation of the variations in the width of the distribution
+                * zmean_shifts_array = np.array of floats. A template of the shifts in the mean z of the dndz
+                * sigma_shifts_array = np.array of floats. A template of the shifts in the width of the dndz
                 * nside = float. Nside that sets the size of pixels over which dn/dz is constant
                 * bvec = list containing [b1,    b2,    bs2,   bnabla2, SN] to be fed to Anzu to obtain Pgg
                 * z_min_int (optional) = float. Minimum of range for the integrals over chi
                 * z_max_int (optional) = float. z_max_int
-                * modulation_of_mean_of_draws (optional) = float. Modulation of the mean of these shifts across the sky
                 * n_samples_of_chi (optional) = int (a power of 2). Number of samples in chi
                 * nside_upsampling (optional) = int (a power of 2). nside of the upsampled pixelization
                 * plots_dir (optional) = str. Path to save any plots.
                 * k (optional) = np array of floats. k at which to evaluate Pkgg. If None, k = np.logspace(-3,0,200)
                 * smoothing_factor (optional)=float. Fraction of pixel width by which to smooth the injected anisotropy
+                * n_samples_of_chi = int. A power of 2, # of samples in comoving distance
         """
         self.sigma = sigma
         self.z_mean = z_mean
@@ -44,12 +46,14 @@ class experiment:
         self.z_max_int = z_max_int
         self.sigma_zshift = sigma_zshift
         self.sigma_zwidth = sigma_zwidth
-        self.nside = nside
+        self.npix = len(zmean_shifts_array)
+        self.nside = hp.get_nside(zmean_shifts_array)
+        self.zmean_shifts_array = zmean_shifts_array
+        self.sigma_shifts_array = sigma_shifts_array
         self.bvec = bvec
         self.plots_dir = plots_dir
         if k is None:
             k = np.logspace(-3,0,200)
-        self.npix = hp.nside2npix(nside)
         self.smoothing_factor = smoothing_factor
 
         # The user input is in redshift units because this is more intuitive. However, we will define our dndzs to be
@@ -68,17 +72,16 @@ class experiment:
         self.sigma_chiwidth = Planck18.comoving_distance(z_mean + sigma_zwidth).value - Planck18.comoving_distance(
             z_mean).value
 
-        # Initialize samples in chi (chi is comoving distance throughout)
-        n_samples_of_chi = 2 ** 10  # Choose a power of 2
-
         # Get the redshift corresponding to these values of chi in the Planck18 cosmology
         self.z_array = np.zeros((self.npix, n_samples_of_chi))
         for i, chi in enumerate(self.chi_array):
             self.z_array[:, i] = z_at_value(Planck18.comoving_distance, chi * u.Mpc)
 
-        # Draw random values in each pixel for the shift of the central redshift of the dndz
-        chimean_shifts_array = np.random.normal(loc=modulation_of_mean_of_draws, scale=self.sigma_chishift, size=self.npix)
-        width_shifts_array = np.random.normal(loc=modulation_of_mean_of_draws, scale=self.sigma_chiwidth, size=self.npix)
+        # Convert template of z-shifts to chi-shifts
+        chimean_shifts_array = Planck18.comoving_distance(z_mean + zmean_shifts_array).value \
+                               - Planck18.comoving_distance(z_mean).value
+        width_shifts_array = Planck18.comoving_distance(z_mean + sigma_shifts_array).value \
+                               - Planck18.comoving_distance(z_mean).value
 
         # In each pixel, calculate the perturbed dndz as a Gaussian in chi
         dndz_perturbed = (1 / ((self.chi_sigma_fid + width_shifts_array[..., np.newaxis]) * np.sqrt(2 * np.pi))) * np.exp(
