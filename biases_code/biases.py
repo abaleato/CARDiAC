@@ -556,7 +556,7 @@ class dummy_class(object):
     A dummy class to initialize an empty object and populate it with the desired dictionary loaded from file
     '''
     def __init__(self):
-        print('Initialized empty object')
+        pass
 
     def save_properties(self, output_filename='./dict_with_properties'):
         """
@@ -567,7 +567,7 @@ class dummy_class(object):
         with open(output_filename+'.pkl', 'wb') as output:
             pickle.dump(self.__dict__, output, pickle.HIGHEST_PROTOCOL)
 
-def load_from_file(filename='./dict_with_properties'):
+def load_from_file(filename='./dict_with_properties', verbose=False):
     """
     Load a dictionary of the key properties. Must have previously been save  experiment.save_properties()
     Inputs:
@@ -577,7 +577,9 @@ def load_from_file(filename='./dict_with_properties'):
     """
     with open(filename+'.pkl', 'rb') as input:
         experiment_dict = pickle.load(input)
-    print('Successfully loaded experiment object with properties:\n')
+    verbose:
+        print('Successfully loaded experiment object with properties:\n')
+        print(experiment_dict)
 
     dummy_object = dummy_class()
     dummy_object.__dict__ = experiment_dict
