@@ -17,8 +17,8 @@ import pickle
 
 class experiment:
     def __init__(self, sigma, z_mean, sigma_zshift, sigma_zwidth, zmean_shifts_array, sigma_shifts_array, bvec,
-                 z_min_int=0.005, z_max_int = None, n_samples_of_chi=2**10, nside_upsampling=128, plots_dir='', k=None,
-                 smoothing_factor = 0, n_samples_of_chi=2**10):
+                 z_min_int=0.005, z_max_int = None, nside_upsampling=128, plots_dir='', k=None, smoothing_factor = 0,
+                 n_samples_of_chi=2**10):
         """ Initialise a cosmology and experimental charactierstics
             - Inputs:
                 * sigma = float. Standard deviation of the fiducial dndz
