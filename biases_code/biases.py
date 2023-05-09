@@ -16,7 +16,7 @@ from functools import partial
 import pickle
 
 class experiment:
-    def __init__(self, sigma, z_mean, sigma_zshift, sigma_zwidth, zmean_shifts_array, sigma_shifts_array, bvec,
+    def __init__(self, sigma, z_mean, sigma_zshift, sigma_zwidth, zmean_shifts_array, bvec, sigma_shifts_array='none',
                  z_min_int=0.005, z_max_int = None, nside_upsampling=128, plots_dir='', k=None, smoothing_factor = 0,
                  n_samples_of_chi=2**10):
         """ Initialise a cosmology and experimental charactierstics
@@ -26,9 +26,8 @@ class experiment:
                 * sigma_zshift = float. Standard deviation of the shifts in the central redshift of the distribution
                 * sigma_zwidth = float. Standard deviation of the variations in the width of the distribution
                 * zmean_shifts_array = np.array of floats. A template of the shifts in the mean z of the dndz
-                * sigma_shifts_array = np.array of floats. A template of the shifts in the width of the dndz
-                * nside = float. Nside that sets the size of pixels over which dn/dz is constant
                 * bvec = list containing [b1,    b2,    bs2,   bnabla2, SN] to be fed to Anzu to obtain Pgg
+                * sigma_shifts_array = np.array of floats. A template of the shifts in the width of the dndz
                 * z_min_int (optional) = float. Minimum of range for the integrals over chi
                 * z_max_int (optional) = float. z_max_int
                 * n_samples_of_chi (optional) = int (a power of 2). Number of samples in chi
@@ -38,6 +37,8 @@ class experiment:
                 * smoothing_factor (optional)=float. Fraction of pixel width by which to smooth the injected anisotropy
                 * n_samples_of_chi = int. A power of 2, # of samples in comoving distance
         """
+        if sigma_shifts_array=='none':
+            sigma_shifts_array = np.zeros_like(zmean_shifts_array)
         self.sigma = sigma
         self.z_mean = z_mean
         self.z_min_int = z_min_int
