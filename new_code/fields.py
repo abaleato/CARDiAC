@@ -101,7 +101,7 @@ class gal_shear(Field):
         self.sigma = sigma
         self.z_mean = z_mean
 
-        g_d = gal_delta(grid, sigma, z_mean, grid, template_zmean_shifts, template_width_shifts, get_delta_p=False)
+        g_d = gal_delta(grid, sigma, z_mean, template_zmean_shifts, template_width_shifts, get_delta_p=False)
         phi_fid_array = g_d.phi_fid_array
         phi_perturbed_array = g_d.phi_perturbed_array
 
