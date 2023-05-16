@@ -91,7 +91,7 @@ class gal_delta(Field):
         phi_fid_array *= phi_norm ** (-1)
 
         if get_delta_p:
-            super().__init__(phi_perturbed_array, phi_fid_array)
+            super().__init__(grid, phi_perturbed_array, phi_fid_array)
         else:
             self.phi_perturbed_array = phi_perturbed_array
             self.phi_fid_array = phi_fid_array
