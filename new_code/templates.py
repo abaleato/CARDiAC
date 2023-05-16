@@ -1,7 +1,6 @@
 import numpy as np
 import healpy as hp
 import matplotlib.pyplot as plt
-import matplotlib as mpl
 
 class Template:
     def __init__(self, shifts_template, nside, sigma_of_shift):
