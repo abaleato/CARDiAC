@@ -55,6 +55,11 @@ class gal_delta(Field):
 
         self.sigma = sigma
         self.z_mean = z_mean
+        # The user input is in redshift units because this is more intuitive. However, we will define our dndzs to be
+        # Gaussian in comoving distance. So next, we convert to chi
+        self.chi_mean_fid = Planck18.comoving_distance(z_mean).value
+        # Width of the fiducial distribution
+        self.chi_sigma_fid = Planck18.comoving_distance(z_mean + sigma).value - Planck18.comoving_distance(z_mean).value
 
         # Convert template of z-shifts to chi-shifts
         if template_zmean_shifts is None:
@@ -69,9 +74,9 @@ class gal_delta(Field):
                                  - Planck18.comoving_distance(z_mean).value
 
         # In each pixel, calculate the perturbed dndz as a Gaussian in chi
-        dndz_perturbed = (1 / ((grid.chi_sigma_fid + width_shifts_array[..., np.newaxis]) * np.sqrt(2 * np.pi))) * np.exp(
-            -(grid.chi_array - grid.chi_mean_fid - chimean_shifts_array[..., np.newaxis]) ** 2 / (
-                        2 * (grid.chi_sigma_fid + width_shifts_array[..., np.newaxis]) ** 2))
+        dndz_perturbed = (1 / ((self.chi_sigma_fid + width_shifts_array[..., np.newaxis]) * np.sqrt(2 * np.pi))) * np.exp(
+            -(grid.chi_array - self.chi_mean_fid - chimean_shifts_array[..., np.newaxis]) ** 2 / (
+                        2 * (self.chi_sigma_fid + width_shifts_array[..., np.newaxis]) ** 2))
         # Take the fiducial dndz to be the monopole of the perturbed dndz
         dndz_fid = np.mean(dndz_perturbed, axis=0)
 
