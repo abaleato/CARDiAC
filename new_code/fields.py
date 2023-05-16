@@ -63,12 +63,12 @@ class gal_delta(Field):
 
         # Convert template of z-shifts to chi-shifts
         if template_zmean_shifts is None:
-            chimean_shifts_array = np.zeros(grid.npix, type=float)
+            chimean_shifts_array = np.zeros(grid.npix, dtype=float)
         else:
             chimean_shifts_array = Planck18.comoving_distance(z_mean + template_zmean_shifts.map).value \
                                    - Planck18.comoving_distance(z_mean).value
         if template_width_shifts is None:
-            width_shifts_array = np.zeros(grid.npix, type=float)
+            width_shifts_array = np.zeros(grid.npix, dtype=float)
         else:
             width_shifts_array = Planck18.comoving_distance(z_mean + template_width_shifts.map).value \
                                  - Planck18.comoving_distance(z_mean).value
