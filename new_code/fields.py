@@ -49,9 +49,9 @@ class Field:
 class gal_delta(Field):
     def __init__(self, grid, sigma, z_mean, template_zmean_shifts=None, template_width_shifts=None, get_delta_p=True):
         if template_zmean_shifts is not None:
-            assert (grid.npix==len(template_zmean_shifts)), "grid does not match pixelization of z_mean shift template"
+            assert (grid.npix==len(template_zmean_shifts.map)), "grid does not match pixelization of z_mean shift template"
         if template_width_shifts is not None:
-            assert (grid.npix==len(template_width_shifts)), "grid does not match pixelization of width shift template"
+            assert (grid.npix==len(template_width_shifts.map)), "grid does not match pixelization of width shift template"
 
         self.sigma = sigma
         self.z_mean = z_mean
@@ -60,12 +60,12 @@ class gal_delta(Field):
         if template_zmean_shifts is None:
             chimean_shifts_array = np.zeros(grid.npix, type=float)
         else:
-            chimean_shifts_array = Planck18.comoving_distance(z_mean + template_zmean_shifts.shifts_template).value \
+            chimean_shifts_array = Planck18.comoving_distance(z_mean + template_zmean_shifts.map).value \
                                    - Planck18.comoving_distance(z_mean).value
         if template_width_shifts is None:
             width_shifts_array = np.zeros(grid.npix, type=float)
         else:
-            width_shifts_array = Planck18.comoving_distance(z_mean + template_width_shifts.shifts_template).value \
+            width_shifts_array = Planck18.comoving_distance(z_mean + template_width_shifts.map).value \
                                  - Planck18.comoving_distance(z_mean).value
 
         # In each pixel, calculate the perturbed dndz as a Gaussian in chi

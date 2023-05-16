@@ -5,14 +5,14 @@ import matplotlib.pyplot as plt
 class Template:
     def __init__(self, shifts_template, nside, sigma_of_shift):
         """ Contains information about spatial shifts to the center or width of a dndz """
-        self.shifts_template = shifts_template
+        self.map = shifts_template
         self.npix = len(shifts_template)
         self.nside = nside
         self.sigma_of_shift = sigma_of_shift
 
     def show(self, temp_plot_min=None, temp_plot_max=None, title=r'$z_{\mathrm{shift}}$'):
         """ Mollview visualization of the shifts template """
-        hp.mollview(self.shifts_template, min=temp_plot_min, max=temp_plot_max, cmap='PuOr', title=title)
+        hp.mollview(self.map, min=temp_plot_min, max=temp_plot_max, cmap='PuOr', title=title)
         plt.show()
 
 class MockTemplate(Template):
