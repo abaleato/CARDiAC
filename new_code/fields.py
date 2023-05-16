@@ -10,12 +10,13 @@ import utils
 class grid:
     def __init__(self, nside, n_samples_of_chi, z_min_int=0.005, z_max_int = 3.):
         self.nside = nside
+        self.npix = hp.nside2npix(nside)
         self.n_samples_of_chi = n_samples_of_chi
         self.chi_min_int = Planck18.comoving_distance(z_min_int).value
         self.chi_max_int = Planck18.comoving_distance(z_max_int).value
         self.chi_array = np.linspace(self.chi_min_int, self.chi_max_int + 100, n_samples_of_chi)
         # Get the redshift corresponding to these values of chi in the Planck18 cosmology
-        self.z_array = np.zeros((hp.nside2npix(nside), n_samples_of_chi))
+        self.z_array = np.zeros((self.npix, n_samples_of_chi))
         for i, chi in enumerate(self.chi_array):
             self.z_array[:, i] = z_at_value(Planck18.comoving_distance, chi * u.Mpc)
 
