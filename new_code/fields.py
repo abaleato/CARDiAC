@@ -146,7 +146,7 @@ class GalShear(Field):
         self.template_zmean_shifts = template_zmean_shifts
         self.template_width_shifts = template_width_shifts
 
-        g_d = GalDelta(grid, sigma, z_mean, template_zmean_shifts, template_width_shifts, get_delta_p=False)
+        g_d = GalDelta(grid, sigma, z_mean, 'dummy', template_zmean_shifts, template_width_shifts, get_delta_p=False)
         phi_fid_array = g_d.phi_fid_array
         phi_perturbed_array = g_d.phi_perturbed_array
         self.chi_mean_fid = g_d.chi_mean_fid
