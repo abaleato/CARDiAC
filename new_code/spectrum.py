@@ -7,7 +7,7 @@ import _pickle as pickle
 from astropy.cosmology import Planck18
 import utils
 import tracer_spectra
-
+import bias_integrals
 
 class Spec:
     def __init__(self, field1=None, field2=None, load=False, save=False, filename=None):
@@ -44,12 +44,23 @@ class Spec:
             self.kernel = interpolate.interp1d(self.grid.chi_array, field1.p_fid_array * field2.p_fid_array)
 
             # The kernels in Limber integral when approximating the mode-coupling bias in the limit l>>1
-            #self.analytic_proj_kernel = interpolate.(self.chi_array, self.variance_at_distance_slice/self.chi_array**2)
+            self.analytic_proj_kernel = interpolate.(self.grid.chi_array, self.cov_at_chi/self.grid.chi_array**2)
         if save:
-            with open(filename + '.pkl', 'wb') as output:
-                pickle.dump(self.__dict__, output, pickle.HIGHEST_PROTOCOL)
+            self.save_properties(filename)
+
+    def save_properties(self, output_filename='./dict_with_properties'):
+        """
+        Save the dictionary of key properties to file
+        Inputs:
+            * output_filename = str. Output filename
+        """
+        with open(output_filename+'.pkl', 'wb') as output:
+            pickle.dump(self.__dict__, output, pickle.HIGHEST_PROTOCOL)
 
     def get_Cldp1dp2(self):
+        """ Calculate the multi-frequency angular power spectrum of our perturbations (MAPS), a key ingredient
+            of the bias calculations
+        """
         self.lmax = hp.Alm.getlmax(self.field1.delta_p_lm_of_chi.shape[0])
         self.Cl_deltap_of_chi1_chi2 = np.zeros((self.lmax + 1, self.field1.grid.n_samples_of_chi,
                                                 self.field2.grid.n_samples_of_chi))
@@ -71,13 +82,49 @@ class Spec:
         self.cldp_interp = interpolate.interp1d(self.field1.grid.chi_array,
                                     np.diagonal(self.Cl_deltap_of_chi1_chi2, axis1=1, axis2=2), axis=-1)
 
-    def get_biases(self):
+    def get_contributions(self, ells=None, num_processes=1, miniter=1000, maxiter=5000, tol=1e-11, lprime_max='none'):
+        """
+        Helper function to calculate all the contributions to angular clustering -- isotropic and anisotropic
+        - Inputs:
+        * ells (optional) = np.array of ints. Multipoles at which to evauate the contributions
+        * num_processes (optional) = int. Number of processes to use. If >1, use multirocessing
+        * miniter (optional) = int. Minimum number of iterations for quadrature.
+        * maxiter (optional) = int. Maximum number of iterations for quadrature.
+        * tol (optional) = int. Error tolerance before breaking numerical integration.
+        * lprime_max (optional) = int. Value of l above which we ignore the anisotropy in C_l^{\Delta \phi}
+        """
         if not hasattr(self, 'Cl_deltap_of_chi1_chi2'):
             self.get_Cldp1dp2()
         if not hasattr(self, 'Pk'):
             self.get_3D_spectrum()
 
+        if ells is None:
+            # The ells where we want to evaluate the spectra
+            self.ells = np.logspace(np.log10(50), np.log10(1500), 48, dtype=int)
+
+        self.unbiased_clgg = bias_integrals.unbiased_term(self, self.ells, num_processes=num_processes, miniter=miniter,
+                                      maxiter=maxiter, tol=tol)
+
+        # Compute full mode-coupling bias
+        self.conv_bias = bias_integrals.mode_coupling_bias(self, self.ells, lprime_max=lprime_max,
+                                                  num_processes=num_processes,
+                                                  miniter=miniter, maxiter=maxiter, tol=tol)
+
+        # And the analytic approximation, which is very good on small scales
+        self.analytic_mcbias_via_variance = bias_integrals.mode_coupling_bias(self, self.ells,
+                                                                     num_processes=num_processes,
+                                                                     miniter=miniter, maxiter=maxiter, tol=tol,
+                                                                     mode='analytic_via_variance')
+
+        if self.field1.__class__.__name__=='GalDelta' and self.field2.__class__.__name__=='GalDelta':
+            # Compute additive bias
+            self.additive_bias = bias_integrals.additive_bias(self, self.ells, num_processes=num_processes,
+                                                     miniter=miniter, maxiter=maxiter, tol=tol)
+
     def get_3D_spectrum(self):
+        """ Helper function to calculate the 3D power spectra of the tracers. Uses functions in tracer_spectra.py,
+            which in turn call CAMB/anzu. These can be easily replaced with whatever the user prefers
+        """
         higher_z_mean = max(self.field1.z_mean, self.field1.z_mean)  # Central redshift of the furthest away tracer
         lower_z_mean = min(self.field1.z_mean, self.field1.z_mean)  # Central redshift of the furthest away tracer
         higher_sigma = max(self.field1.sigma, self.field1.sigma)  # The higher of the widths
