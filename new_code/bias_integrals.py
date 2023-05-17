@@ -45,8 +45,8 @@ def unbiased_term_at_l(exp, miniter, maxiter, tol, l):
             * l = int. The multipole of \Delta C_l
     """
     print('Working on l={}'.format(l))
-    Pk_interp_1D = interp1d(exp.chi_array, np.diagonal(np.flipud(exp.Pk_interp(exp.chi_array,
-                                                                               (l + 0.5) / exp.chi_array))))
+    Pk_interp_1D = interp1d(exp.grid.chi_array, np.diagonal(np.flipud(exp.Pk_interp(exp.grid.chi_array,
+                                                                               (l + 0.5) / exp.grid.chi_array))))
     result, error = quadrature(integrand_unbiased_auto_term, exp.chi_min_int, exp.chi_max_int,
                                args=(exp.kernel, Pk_interp_1D), miniter=miniter, maxiter=maxiter, tol=tol)
     return result
@@ -98,7 +98,7 @@ def additive_bias_at_l(exp, miniter, maxiter, tol, l):
     """
     print('Working on l={}'.format(l))
     try:
-        Clchi1chi2_interp = interpolate.RegularGridInterpolator((exp.chi_array, exp.chi_array),
+        Clchi1chi2_interp = interpolate.RegularGridInterpolator((exp.grid.chi_array, exp.grid.chi_array),
                                                                 exp.Cl_deltap_of_chi1_chi2[l, :, :],
                                                                 method='linear', bounds_error=True, fill_value=0)
 
@@ -185,20 +185,20 @@ def mode_coupling_bias_at_l(exp, lprime_max, miniter, maxiter, tol, l):
             * l = int. The multipole of \Delta C_l
     """
     print('Working on l={}'.format(l))
-    integrand = np.zeros_like(exp.chi_array)
-    cldp_interp = exp.cldp_interp(exp.chi_array)
+    integrand = np.zeros_like(exp.grid.chi_array)
+    cldp_interp = exp.cldp_interp(exp.grid.chi_array)
     for L in range(l + lprime_max + 1):
         abslmL = np.abs(l - L)
         lpL = l + L
         if abslmL <= lprime_max:
             # Only loop if you will probe scales below cut
-            Pk_interp = np.diagonal(np.flipud(exp.Pk_interp(exp.chi_array, (L + 0.5) / exp.chi_array)))
+            Pk_interp = np.diagonal(np.flipud(exp.Pk_interp(exp.grid.chi_array, (L + 0.5) / exp.grid.chi_array)))
             for lprime in np.arange(abslmL, min(lprime_max, lpL) + 1, 1):
                 if (l + lprime + L) % 2 == 0:
                     w3 = wigner3j(2 * l, 2 * L, 2 * lprime, 0, 0, 0)
                     prefactor = w3 ** 2 * (2 * lprime + 1) * (2 * L + 1) / (4 * np.pi)
-                    integrand += prefactor / exp.chi_array ** 2 * Pk_interp * cldp_interp[lprime]
-    f = interp1d(exp.chi_array, integrand)
+                    integrand += prefactor / exp.grid.chi_array ** 2 * Pk_interp * cldp_interp[lprime]
+    f = interp1d(exp.grid.chi_array, integrand)
     result, error = quadrature(f, exp.chi_min_int, exp.chi_max_int, miniter=miniter, maxiter=maxiter, tol=tol)
     return result
 
@@ -215,8 +215,8 @@ def analytic_mode_coupling_bias_at_l(exp, dummy, miniter, maxiter, tol, l):
     """
     print('Working on l={}'.format(l))
     # Interpolate at the scales required by Limber
-    Pk_interp_1D = interp1d(exp.chi_array, np.diagonal(np.flipud(exp.Pk_interp(exp.chi_array,
-                                                                               (l + 0.5) / exp.chi_array))))
+    Pk_interp_1D = interp1d(exp.grid.chi_array, np.diagonal(np.flipud(exp.Pk_interp(exp.grid.chi_array,
+                                                                               (l + 0.5) / exp.grid.chi_array))))
     result, error = quadrature(limber_integral, exp.chi_min_int,
                                exp.chi_max_int, args=(Pk_interp_1D, exp.mc_kernel),
                                miniter=miniter, maxiter=maxiter, tol=tol)
