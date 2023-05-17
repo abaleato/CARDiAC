@@ -35,7 +35,7 @@ class Spec:
 
 
     def get_Cldp1dp2(self):
-        self.lmax = hp.Alm.getlmax(self.delta_p_lm_of_chi.shape[0])
+        self.lmax = hp.Alm.getlmax(self.field1.delta_p_lm_of_chi.shape[0])
         self.Cl_deltap_of_chi1_chi2 = np.zeros((self.lmax + 1, self.field1.grid.n_samples_of_chi,
                                                 self.field2.grid.n_samples_of_chi))
         for i in range(self.field1.delta_p_lm_of_chi.shape[0]):
