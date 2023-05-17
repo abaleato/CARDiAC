@@ -35,7 +35,7 @@ class Spec:
 
 
     def get_Cldp1dp2(self):
-        self.lmax = hp.Alm.getlmax(self.delta_p_lm_of_chi.shape[0])
+        self.lmax = hp.Alm.getlmax(self.field1.delta_p_lm_of_chi.shape[0])
         self.Cl_deltap_of_chi1_chi2 = np.zeros((self.lmax + 1, self.field1.grid.n_samples_of_chi,
                                                 self.field2.grid.n_samples_of_chi))
         for i in range(self.field1.delta_p_lm_of_chi.shape[0]):
@@ -118,7 +118,7 @@ class Spec:
         plt.xlabel(r'$\mathrm{log}_{10}\,\chi$')
         plt.ylabel(r'$l$')
 
-        label_locs = np.arange(1000, 7000, 1000, dtype=int)
+        label_locs = np.round(np.linspace(self.grid.chi_min_int, self.grid.chi_max_int, 3, dtype=int), decimals=-1)
         ax.set_xticks(utils.find_closest_indices(self.grid.chi_array, label_locs))
         ax.set_xticklabels(label_locs.astype('str'))
         plt.legend()
@@ -153,7 +153,7 @@ class Spec:
 
         ax.set_ylim([0, self.lmax])
 
-        label_locs = np.arange(1000, 7000, 1000, dtype=int)
+        label_locs = np.round(np.linspace(self.grid.chi_min_int, self.grid.chi_max_int, 3, dtype=int), decimals=-1)
         ax.set_xticks(utils.find_closest_indices(self.grid.chi_array, label_locs))
         ax.set_xticklabels(label_locs.astype('str'))
 
@@ -185,7 +185,7 @@ class Spec:
         plt.xlabel(r'$\chi_1$ [Mpc]')
         plt.ylabel(r'$\chi_2$ [Mpc]')
 
-        label_locs = np.arange(1000, 7000, 1000, dtype=int)
+        label_locs = np.round(np.linspace(self.grid.chi_min_int, self.grid.chi_max_int, 3, dtype=int), decimals=-1)
         ax.set_xticks(utils.find_closest_indices(self.grid.chi_array, label_locs))
         ax.set_yticks(utils.find_closest_indices(self.grid.chi_array, label_locs))
 
