@@ -28,7 +28,7 @@ class Spec:
         self.cov_at_chi = np.diagonal(covmat, offset=field1.grid.n_samples_of_chi)
 
         # The fiducial projection kernels
-        #self.kernel = field1.kernel * field2.kernel
+        self.kernel = interp1d(self.grid.chi_array, field1.p_fid_array * field2.p_fid_array)
 
         # The kernels in Limber integral when approximating the mode-coupling bias in the limit l>>1
         #self.analytic_proj_kernel = interp1d(self.chi_array, self.variance_at_distance_slice/self.chi_array**2)
