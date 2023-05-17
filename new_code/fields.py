@@ -59,6 +59,12 @@ class Field:
         for i in range(grid.n_samples_of_chi):
             self.delta_p_lm_of_chi[:, i] = hp.map2alm(self.delta_p_maps[:, i])
 
+    def __eq__(self, other):
+        return self.compatible(other)
+
+    def compatible(self, other):
+        return self.grid == other.grid
+
 class GalDelta(Field):
     def __init__(self, grid, sigma, z_mean, template_zmean_shifts=None, template_width_shifts=None, get_delta_p=True):
         """ Observed galaxy clustering field subject to anisotropy in its (Gaussian) dN/dz
@@ -150,6 +156,6 @@ class GalShear(Field):
                 1 + grid.z_array[0, :]) * utils.lens_efficiency_kernel(grid.chi_array, grid.chi_max_int, phi_fid_array)
         g_pert = 3 / 2. * Planck18.Om0 * Planck18.H0.value ** 2 / c.value ** 2 * grid.chi_array * (
                 1 + grid.z_array[0, :]) * utils.lens_efficiency_kernel(grid.chi_array, grid.chi_max_int, phi_perturbed_array)
-        
+
         # Go on to extract the alms at each chi, and so on
         super().__init__(grid, g_pert, g_fid)
