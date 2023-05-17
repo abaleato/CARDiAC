@@ -44,7 +44,7 @@ class Spec:
             self.kernel = interpolate.interp1d(self.grid.chi_array, field1.p_fid_array * field2.p_fid_array)
 
             # The kernels in Limber integral when approximating the mode-coupling bias in the limit l>>1
-            self.analytic_proj_kernel = interpolate.(self.grid.chi_array, self.cov_at_chi/self.grid.chi_array**2)
+            self.analytic_proj_kernel = interpolate.interp1d(self.grid.chi_array, self.cov_at_chi/self.grid.chi_array**2)
         if save:
             self.save_properties(filename)
 
