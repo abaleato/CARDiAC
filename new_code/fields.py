@@ -59,6 +59,7 @@ class Field:
         for i in range(grid.n_samples_of_chi):
             self.delta_p_lm_of_chi[:, i] = hp.map2alm(self.delta_p_maps[:, i])
 
+    # ToDo: Maybe 'equality' isn't the clearest way of checking this
     def __eq__(self, other):
         return self.compatible(other)
 
@@ -66,12 +67,13 @@ class Field:
         return self.grid == other.grid
 
 class GalDelta(Field):
-    def __init__(self, grid, sigma, z_mean, template_zmean_shifts=None, template_width_shifts=None, get_delta_p=True):
+    def __init__(self, grid, sigma, z_mean, bvec, template_zmean_shifts=None, template_width_shifts=None, get_delta_p=True):
         """ Observed galaxy clustering field subject to anisotropy in its (Gaussian) dN/dz
             - Inputs:
                 * grid = Instance of grid class containing numerical hyperparams
                 * sigma = float. Standard deviation of the fiducial dN/dz
                 * z_mean = float. Central redshift of the fiducial dN/dz
+                * bvec = list containing [b1,    b2,    bs2,   bnabla2, SN] to be fed to Anzu to obtain Pgg
                 * template_zmean_shifts = instance of templates.Template with shifts in the mean redshift of the dN/dz
                 * template_width_shifts = instance of templates.Template with shifts in the width of the dN/dz
                 * get_delta_p (optional) = Bool. If False, use as helper function in cosmic shear calculation
@@ -85,6 +87,7 @@ class GalDelta(Field):
         self.template_width_shifts = template_width_shifts
         self.sigma = sigma
         self.z_mean = z_mean
+        self.bvec = bvec # ToDo: Allow tracers to have different bias
         # The user input is in redshift units because this is more intuitive. However, we will define our dndzs to be
         # Gaussian in comoving distance. So next, we convert to chi
         self.chi_mean_fid = Planck18.comoving_distance(z_mean).value

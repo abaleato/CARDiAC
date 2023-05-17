@@ -1,10 +1,13 @@
 import numpy as np
 import healpy as hp
-from scipy.interpolate import interp1d
+from scipy import interpolate
 import matplotlib.pyplot as plt
 from scipy.ndimage.filters import gaussian_filter
-import utils
 import _pickle as pickle
+from astropy.cosmology import Planck18
+import utils
+import tracer_spectra
+
 
 class Spec:
     def __init__(self, field1=None, field2=None, load=False, save=False, filename=None):
@@ -38,19 +41,19 @@ class Spec:
             self.cov_at_chi = np.diagonal(covmat, offset=field1.grid.n_samples_of_chi)
 
             # The fiducial projection kernels
-            self.kernel = interp1d(self.grid.chi_array, field1.p_fid_array * field2.p_fid_array)
+            self.kernel = interpolate.interp1d(self.grid.chi_array, field1.p_fid_array * field2.p_fid_array)
 
             # The kernels in Limber integral when approximating the mode-coupling bias in the limit l>>1
-            #self.analytic_proj_kernel = interp1d(self.chi_array, self.variance_at_distance_slice/self.chi_array**2)
+            #self.analytic_proj_kernel = interpolate.(self.chi_array, self.variance_at_distance_slice/self.chi_array**2)
         if save:
             with open(filename + '.pkl', 'wb') as output:
                 pickle.dump(self.__dict__, output, pickle.HIGHEST_PROTOCOL)
-
 
     def get_Cldp1dp2(self):
         self.lmax = hp.Alm.getlmax(self.field1.delta_p_lm_of_chi.shape[0])
         self.Cl_deltap_of_chi1_chi2 = np.zeros((self.lmax + 1, self.field1.grid.n_samples_of_chi,
                                                 self.field2.grid.n_samples_of_chi))
+        # ToDo: JIT this?
         for i in range(self.field1.delta_p_lm_of_chi.shape[0]):
             l, m = hp.Alm.getlm(self.lmax, i)  # Get the l corresponding to each value of m
             if m != 0:
@@ -65,23 +68,46 @@ class Spec:
                                                             2 * l + 1)
 
         # We'll need the interpolated version of this
-        self.cldp_interp = interp1d(self.field1.grid.chi_array,
+        self.cldp_interp = interpolate.interp1d(self.field1.grid.chi_array,
                                     np.diagonal(self.Cl_deltap_of_chi1_chi2, axis1=1, axis2=2), axis=-1)
 
-    '''
-    def get_biases(self)
+    def get_biases(self):
+        if not hasattr(self, 'Cl_deltap_of_chi1_chi2'):
+            self.get_Cldp1dp2()
+        if not hasattr(self, 'Pk'):
+            self.get_3D_spectrum()
 
     def get_3D_spectrum(self):
-        # Get the galaxy power spectrum for this sample
-        # Evaluate predictions at the Planck 18 cosmology and redshifts within 7sigma of the dndzmean
-        zs_sampled = np.linspace(z_mean - 7 * sigma, z_mean + 7 * sigma, 15)
-        chis_sampled = Planck18.comoving_distance(zs_sampled).value
-        self.Pkgg = galaxy_ps.get_galaxy_ps(bvec, k, zs_sampled)
+        higher_z_mean = max(self.field1.z_mean, self.field1.z_mean)  # Central redshift of the furthest away tracer
+        lower_z_mean = min(self.field1.z_mean, self.field1.z_mean)  # Central redshift of the furthest away tracer
+        higher_sigma = max(self.field1.sigma, self.field1.sigma)  # The higher of the widths
+        if self.field1.__class__.__name__=='GalDelta' and self.field2.__class__.__name__=='GalDelta':
+            # Get galaxy power spectrum at redshifts near the center of the dN/dz
+            # Evaluate predictions at the Planck 18 cosmology and redshifts within 5sigma of the dndzmean
+            zs_sampled = np.linspace(lower_z_mean - 5 * higher_sigma, higher_z_mean + 5 * higher_sigma, 15)
+            chis_sampled = Planck18.comoving_distance(zs_sampled).value
+            # ToDo: Choose k's more systematically
+            k = np.logspace(-3, 0, 200)
+            # ToDo: Allow tracers to have different bias
+            self.Pk = tracer_spectra.get_galaxy_ps(self.field1.bvec, k, zs_sampled)
+        elif self.field1.__class__.__name__ == 'GalDelta' and self.field2.__class__.__name__ == 'GalShear':
+            # Get galaxy-cross-matter power spectrum at redshifts btw 0 and the source galaxies
+            zs_sampled = np.linspace(0, higher_z_mean + 5 * higher_sigma)
+            chis_sampled = Planck18.comoving_distance(zs_sampled).value
+            self.Pk = None # ToDo: Implement galaxy-matter PS
+            k = None # ToDo: Implement galaxy-matter PS
+        elif self.field1.__class__.__name__ == 'GalShear' and self.field2.__class__.__name__ == 'GalShear':
+            # Get the non-linear matter power spectrum at redshifts btw 0 and the source galaxies
+            zs_sampled = np.linspace(0, higher_z_mean + 5 * higher_sigma)
+            chis_sampled = Planck18.comoving_distance(zs_sampled).value
+            k, pk_nonlin = tracer_spectra.get_matter_ps(zs_sampled)
+            self.Pk = np.swapaxes(pk_nonlin, 0, 1)
+
         # Interpolate
         # Note: scipy.interp2d is deprecated, but it is MUCH faster than the new alternatives...
-        self.Pkgg_interp = interpolate.interp2d(chis_sampled, k, self.Pkgg,
+        self.Pk_interp = interpolate.interp2d(chis_sampled, k, self.Pk,
                                                 kind='linear', bounds_error=False, fill_value=0)
-    '''
+
     def plot_DeltaP_covariance(self):
         '''
         Plot the perturbation covariance as a function of distance
