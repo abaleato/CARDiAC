@@ -92,19 +92,24 @@ class Spec:
         plt.xlabel(r'$\mathrm{log}_{10}\,\chi$')
         plt.ylabel(r'$C_l^{\Delta '+self.label_dict[self.field1.__class__.__name__]+'}(\chi,\chi)$')
         plt.legend()
-        plt.xlim([1, 5000])
+        plt.xlim([1, self.field1.chi_mean_fid + 10*self.field1.chi_sigma_fid])
         plt.show()
 
-    def plot_Cl_DeltaP_of_chi_2D(self):
+    def plot_Cl_DeltaP_of_chi_2D(self, xmin=None, xmax=None, min_log_range=-20, max_log_range=-9):
         '''
         Plot log C_l^{\Delta \phi}(\chi,\chi) against l and  \mathrm{log}_{10}\,\chi
         '''
+        if xmin is None:
+            xmin = self.field1.chi_mean_fid - 7*self.field1.chi_sigma_fid
+        if xmax is None:
+            xmax = self.field1.chi_mean_fid + 7*self.field1.chi_sigma_fid
+
         X, Y = np.meshgrid(np.arange(len(self.grid.chi_array)), np.arange(self.lmax + 1))
         Z = np.log10(np.diagonal(self.Cl_deltap_of_chi1_chi2, axis1=1, axis2=2))
         # Set the log of 0 to a tiny negative number
         Z[np.diagonal(self.Cl_deltap_of_chi1_chi2, axis1=1, axis2=2) == 0] = -1e100
 
-        contours = np.linspace(-20, -9, 20)
+        contours = np.linspace(min_log_range, max_log_range, 20)
 
         # Smooth array with a Gaussian filter for plotting purposes
         Z_smoothed = gaussian_filter(Z, sigma=3)
@@ -118,19 +123,25 @@ class Spec:
         plt.xlabel(r'$\mathrm{log}_{10}\,\chi$')
         plt.ylabel(r'$l$')
 
-        label_locs = np.round(np.linspace(self.grid.chi_min_int, self.grid.chi_max_int, 3, dtype=int), decimals=-1)
+        label_locs = np.round(np.linspace(xmin+50, xmax-50, 3, dtype=int), decimals=-1)
         ax.set_xticks(utils.find_closest_indices(self.grid.chi_array, label_locs))
         ax.set_xticklabels(label_locs.astype('str'))
         plt.legend()
 
         plt.title(r'$\mathrm{log}_{10} \, C_l^{\Delta '+self.label_dict[self.field1.__class__.__name__]+'}(\chi)$')
         plt.colorbar(location='right')
+        plt.xlim([np.where(self.grid.chi_array > xmin)[0][0], np.where(self.grid.chi_array > xmax)[0][0]])
         plt.show()
 
-    def plot_Cl_DeltaP_of_chi_chiprime_2D(self):
+    def plot_Cl_DeltaP_of_chi_chiprime_2D(self, xmin=None, xmax=None, min_log_range=-20, max_log_range=-9):
         '''
         Plot log |C_l^{\Delta \phi}(\chi,\chi')| against l and  \mathrm{log}_{10}\,\chi
         '''
+        if xmin is None:
+            xmin = self.field1.chi_mean_fid - 7*self.field1.chi_sigma_fid
+        if xmax is None:
+            xmax = self.field1.chi_mean_fid + 7*self.field1.chi_sigma_fid
+
         chi_idx = np.where(np.log10(self.grid.chi_array) > 3.2)[0][0]
         X, Y = np.meshgrid(np.arange(len(self.grid.chi_array)), np.arange(self.lmax + 1))
 
@@ -141,7 +152,7 @@ class Spec:
         # Smooth array with a Gaussian filter for plotting purposes
         Z_fixed_chi_smoothed = gaussian_filter(Z_fixed_chi, sigma=3)
 
-        contours = np.linspace(-20, -9, 20)
+        contours = np.linspace(min_log_range, max_log_range, 20)
         plt.contourf(X, Y, Z_fixed_chi_smoothed, levels=contours, cmap='inferno', extend='both')
 
         plt.xlabel(r'$\mathrm{log}_{10}\,\chi$')
@@ -153,7 +164,7 @@ class Spec:
 
         ax.set_ylim([0, self.lmax])
 
-        label_locs = np.round(np.linspace(self.grid.chi_min_int, self.grid.chi_max_int, 3, dtype=int), decimals=-1)
+        label_locs = np.round(np.linspace(xmin+50, xmax-50, 3, dtype=int), decimals=-1)
         ax.set_xticks(utils.find_closest_indices(self.grid.chi_array, label_locs))
         ax.set_xticklabels(label_locs.astype('str'))
 
@@ -162,17 +173,26 @@ class Spec:
 
         ax.axvline(chi_idx, label=r'$\chi^{*}$', ls=':', color='w')
         plt.legend()
+        plt.xlim([np.where(self.grid.chi_array > xmin)[0][0], np.where(self.grid.chi_array > xmax)[0][0]])
         plt.show()
 
-    def plot_Cl_DeltaP_vs_chi_chiprime_2D(self, l):
+    def plot_Cl_DeltaP_vs_chi_chiprime_2D(self, l, color_range=None, xmin=None, xmax=None):
         '''
         Plot C_l^{\Delta \phi}(\chi,\chi') against \chi \chi' a fixed l
         '''
-        contours = np.linspace(-2.5e-9, 2.5e-9, 20)
+        if xmin is None:
+            xmin = self.field1.chi_mean_fid - 5*self.field1.chi_sigma_fid
+        if xmax is None:
+            xmax = self.field1.chi_mean_fid + 5*self.field1.chi_sigma_fid            
+        
         suffix = ''
 
         X, Y = np.meshgrid(np.arange(len(self.grid.chi_array)), np.arange(len(self.grid.chi_array)))
         Z = self.Cl_deltap_of_chi1_chi2[l, :, :]
+        
+        if color_range is None:
+            color_range = np.max(Z)
+        contours = np.linspace(-color_range, color_range, 20)
 
         plt.contourf(X, Y, Z, cmap='RdBu', levels=contours, extend='neither')
 
@@ -185,7 +205,7 @@ class Spec:
         plt.xlabel(r'$\chi_1$ [Mpc]')
         plt.ylabel(r'$\chi_2$ [Mpc]')
 
-        label_locs = np.round(np.linspace(self.grid.chi_min_int, self.grid.chi_max_int, 3, dtype=int), decimals=-1)
+        label_locs = np.round(np.linspace(xmin+50, xmax-50, 3, dtype=int), decimals=-1)
         ax.set_xticks(utils.find_closest_indices(self.grid.chi_array, label_locs))
         ax.set_yticks(utils.find_closest_indices(self.grid.chi_array, label_locs))
 
@@ -201,6 +221,6 @@ class Spec:
         cbar.formatter.set_powerlimits((0, 0))
         cbar.formatter.set_useMathText(True)
 
-        plt.xlim([np.where(self.grid.chi_array > 900)[0][0], np.where(self.grid.chi_array > 3500)[0][0]])
-        plt.ylim([np.where(self.grid.chi_array > 900)[0][0], np.where(self.grid.chi_array > 3500)[0][0]])
+        plt.xlim([np.where(self.grid.chi_array > xmin)[0][0], np.where(self.grid.chi_array > xmax)[0][0]])
+        plt.ylim([np.where(self.grid.chi_array > xmin)[0][0], np.where(self.grid.chi_array > xmax)[0][0]])
         plt.show()
