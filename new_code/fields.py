@@ -53,6 +53,9 @@ class gal_delta(Field):
         if template_width_shifts is not None:
             assert (grid.npix==len(template_width_shifts.map)), "grid does not match pixelization of width shift template"
 
+        self.template_zmean_shifts = template_zmean_shifts
+        self.template_width_shifts = template_width_shifts
+
         self.sigma = sigma
         self.z_mean = z_mean
         # The user input is in redshift units because this is more intuitive. However, we will define our dndzs to be
@@ -100,6 +103,8 @@ class gal_shear(Field):
     def __init__(self, grid, sigma, z_mean, template_zmean_shifts=None, template_width_shifts=None):
         self.sigma = sigma
         self.z_mean = z_mean
+        self.template_zmean_shifts = template_zmean_shifts
+        self.template_width_shifts = template_width_shifts
 
         g_d = gal_delta(grid, sigma, z_mean, template_zmean_shifts, template_width_shifts, get_delta_p=False)
         phi_fid_array = g_d.phi_fid_array
