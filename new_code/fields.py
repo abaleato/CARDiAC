@@ -9,6 +9,13 @@ import utils
 
 class grid:
     def __init__(self, nside, n_samples_of_chi, z_min_int=0.005, z_max_int = 3.):
+        """ Defines the numerical hyperparameters of our calculation
+            - Inputs:sigma_chishift
+                * nside = int, power of 2. Healpix nside defining the pixelization. Must match shifts template
+                * z_min_int (optional) = float. Minimum of range for the integrals over chi
+                * z_max_int (optional) = float. z_max_int
+                * n_samples_of_chi = int. A power of 2, # of samples in comoving distance
+        """
         self.nside = nside
         self.npix = hp.nside2npix(nside)
         self.n_samples_of_chi = n_samples_of_chi
@@ -35,7 +42,13 @@ class grid:
 
 class Field:
     def __init__(self, grid, p_pert_array, p_fid_array):
-
+        """ General class defining observed fields subject to projection anisotropy. Computes analytic projection kernel
+            and alms of each redshift slice
+            - Inputs:
+                * grid = Instance of grid class containing numerical hyperparams
+                * p_pert_array = np.array of size (grid.npix, grid.n_samples_of_chi). Contains perturbation to phi/g/etc
+                * p_fid_array = np.array of size (grid.n_samples_of_chi). Fiducial phi/g/etc
+        """
         self.delta_p_maps = p_pert_array - p_fid_array
         self.kernel = interp1d(grid.chi_array, p_fid_array)
         self.grid = grid
@@ -46,16 +59,24 @@ class Field:
         for i in range(grid.n_samples_of_chi):
             self.delta_p_lm_of_chi[:, i] = hp.map2alm(self.delta_p_maps[:, i])
 
-class gal_delta(Field):
+class GalDelta(Field):
     def __init__(self, grid, sigma, z_mean, template_zmean_shifts=None, template_width_shifts=None, get_delta_p=True):
+        """ Observed galaxy clustering field subject to anisotropy in its (Gaussian) dN/dz
+            - Inputs:
+                * grid = Instance of grid class containing numerical hyperparams
+                * sigma = float. Standard deviation of the fiducial dN/dz
+                * z_mean = float. Central redshift of the fiducial dN/dz
+                * template_zmean_shifts = instance of templates.Template with shifts in the mean redshift of the dN/dz
+                * template_width_shifts = instance of templates.Template with shifts in the width of the dN/dz
+                * get_delta_p (optional) = Bool. If False, use as helper function in cosmic shear calculation
+        """
         if template_zmean_shifts is not None:
-            assert (grid.npix==len(template_zmean_shifts.map)), "grid does not match pixelization of z_mean shift template"
+            assert (grid.npix==len(template_zmean_shifts.map)), "grid does not match nside of z_mean shift template"
         if template_width_shifts is not None:
-            assert (grid.npix==len(template_width_shifts.map)), "grid does not match pixelization of width shift template"
+            assert (grid.npix==len(template_width_shifts.map)), "grid does not match nside of width shift template"
 
         self.template_zmean_shifts = template_zmean_shifts
         self.template_width_shifts = template_width_shifts
-
         self.sigma = sigma
         self.z_mean = z_mean
         # The user input is in redshift units because this is more intuitive. However, we will define our dndzs to be
@@ -94,24 +115,34 @@ class gal_delta(Field):
         phi_fid_array *= phi_norm ** (-1)
 
         if get_delta_p:
+            # Go on to extract the alms at each chi, and so on
             super().__init__(grid, phi_perturbed_array, phi_fid_array)
         else:
+            # Alternatively, when doing the cosmic shear calculation, we only need these two
             self.phi_perturbed_array = phi_perturbed_array
             self.phi_fid_array = phi_fid_array
 
-class gal_shear(Field):
+class GalShear(Field):
     def __init__(self, grid, sigma, z_mean, template_zmean_shifts=None, template_width_shifts=None):
+        """ Observed cosmic shear field subject to anisotropy in the (Gaussian) dN/dz of the source galaxies
+            - Inputs:
+                * grid = Instance of grid class containing numerical hyperparams
+                * sigma = float. Standard deviation of the fiducial dN/dz
+                * z_mean = float. Central redshift of the fiducial dN/dz
+                * template_zmean_shifts = instance of templates.Template with shifts in the mean redshift of the dN/dz
+                * template_width_shifts = instance of templates.Template with shifts in the width of the dN/dz
+        """
         self.sigma = sigma
         self.z_mean = z_mean
         self.template_zmean_shifts = template_zmean_shifts
         self.template_width_shifts = template_width_shifts
 
-        g_d = gal_delta(grid, sigma, z_mean, template_zmean_shifts, template_width_shifts, get_delta_p=False)
+        g_d = GalDelta(grid, sigma, z_mean, template_zmean_shifts, template_width_shifts, get_delta_p=False)
         phi_fid_array = g_d.phi_fid_array
         phi_perturbed_array = g_d.phi_perturbed_array
 
-        # If doing cosmic shear, calculate the galaxy lensing kernel
-        # Dummy run to pre-compile with numba
+        # Calculate the galaxy lensing kernel
+        # But first, a dummy run to pre-compile with numba
         utils.lens_efficiency_kernel(grid.chi_array, grid.chi_max_int, np.zeros_like(grid.chi_array))
 
         # Now in earnest
@@ -119,5 +150,6 @@ class gal_shear(Field):
                 1 + grid.z_array[0, :]) * utils.lens_efficiency_kernel(grid.chi_array, grid.chi_max_int, phi_fid_array)
         g_pert = 3 / 2. * Planck18.Om0 * Planck18.H0.value ** 2 / c.value ** 2 * grid.chi_array * (
                 1 + grid.z_array[0, :]) * utils.lens_efficiency_kernel(grid.chi_array, grid.chi_max_int, phi_perturbed_array)
-
+        
+        # Go on to extract the alms at each chi, and so on
         super().__init__(grid, g_pert, g_fid)
