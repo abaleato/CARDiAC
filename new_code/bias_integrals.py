@@ -47,7 +47,7 @@ def unbiased_term_at_l(exp, miniter, maxiter, tol, l):
     print('Working on l={}'.format(l))
     Pk_interp_1D = interp1d(exp.grid.chi_array, np.diagonal(np.flipud(exp.Pk_interp(exp.grid.chi_array,
                                                                                (l + 0.5) / exp.grid.chi_array))))
-    result, error = quadrature(integrand_unbiased_auto_term, exp.chi_min_int, exp.chi_max_int,
+    result, error = quadrature(integrand_unbiased_auto_term, exp.grid.chi_min_int, exp.grid.chi_max_int,
                                args=(exp.kernel, Pk_interp_1D), miniter=miniter, maxiter=maxiter, tol=tol)
     return result
 
@@ -102,8 +102,8 @@ def additive_bias_at_l(exp, miniter, maxiter, tol, l):
                                                                 exp.Cl_deltap_of_chi1_chi2[l, :, :],
                                                                 method='linear', bounds_error=True, fill_value=0)
 
-        result, error = quadrature(integrand_additive_term, exp.chi_min_int,
-                                   exp.chi_max_int, args=(Clchi1chi2_interp, exp.chi_min_int, exp.chi_max_int),
+        result, error = quadrature(integrand_additive_term, exp.grid.chi_min_int,
+                                   exp.grid.chi_max_int, args=(Clchi1chi2_interp, exp.grid.chi_min_int, exp.grid.chi_max_int),
                                    miniter=miniter, maxiter=maxiter, tol=tol)
     except IndexError as e:
         print(f"{e}")
@@ -199,7 +199,7 @@ def mode_coupling_bias_at_l(exp, lprime_max, miniter, maxiter, tol, l):
                     prefactor = w3 ** 2 * (2 * lprime + 1) * (2 * L + 1) / (4 * np.pi)
                     integrand += prefactor / exp.grid.chi_array ** 2 * Pk_interp * cldp_interp[lprime]
     f = interp1d(exp.grid.chi_array, integrand)
-    result, error = quadrature(f, exp.chi_min_int, exp.chi_max_int, miniter=miniter, maxiter=maxiter, tol=tol)
+    result, error = quadrature(f, exp.grid.chi_min_int, exp.grid.chi_max_int, miniter=miniter, maxiter=maxiter, tol=tol)
     return result
 
 def analytic_mode_coupling_bias_at_l(exp, dummy, miniter, maxiter, tol, l):
@@ -217,8 +217,8 @@ def analytic_mode_coupling_bias_at_l(exp, dummy, miniter, maxiter, tol, l):
     # Interpolate at the scales required by Limber
     Pk_interp_1D = interp1d(exp.grid.chi_array, np.diagonal(np.flipud(exp.Pk_interp(exp.grid.chi_array,
                                                                                (l + 0.5) / exp.grid.chi_array))))
-    result, error = quadrature(limber_integral, exp.chi_min_int,
-                               exp.chi_max_int, args=(Pk_interp_1D, exp.mc_kernel),
+    result, error = quadrature(limber_integral, exp.grid.chi_min_int,
+                               exp.grid.chi_max_int, args=(Pk_interp_1D, exp.mc_kernel),
                                miniter=miniter, maxiter=maxiter, tol=tol)
     return result
 
