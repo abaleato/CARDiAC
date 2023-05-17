@@ -102,7 +102,7 @@ def compute_velocileptors_spectra(cosmovec, snapscale, use_physical_densities=Tr
 
     return cleftspline, cleftobj
 
-def get_galaxy_ps(bvec, k, zs_sampled):
+def get_galaxy_ps(bvec, k, zs_sampled, halomatter=False):
     '''
     Calculate the galaxy power spectrum in the Planck 18 cosmology
     - Inputs:
@@ -110,6 +110,7 @@ def get_galaxy_ps(bvec, k, zs_sampled):
         * z_mean = float. Central redshift of the fiducial dndz
         * k = np array of floats. k at which to evaluate Pkgg.
         * zs_sampled = redshifts at which to evaluate the Anzu prediction
+        * halomatter (optional) = Bool. If False, get gg spectrum. If False, get galaxy-matter cross spectrum
     '''
     emu = LPTEmulator()
     h = Planck18.H0.value / 100.
@@ -118,10 +119,10 @@ def get_galaxy_ps(bvec, k, zs_sampled):
         a = 1/(1+z)
         if i==0:
             cosmo_vec = np.atleast_2d([Planck18.Ob0 * h ** 2, Planck18.Odm0 * h ** 2, -1, 0.966, 0.812,
-                                       Planck18.H0.valu2, 3.046, a])  # Values from Planck 2018
+                                       Planck18.H0.value, 3.046, a])  # Values from Planck 2018
         else:
             cosmo_vec = np.vstack([np.atleast_2d([Planck18.Ob0 * h ** 2, Planck18.Odm0 * h ** 2, -1, 0.966, 0.812,
-                                                  Planck18.H0.valu, 3.046, a]), cosmo_vec])
+                                                  Planck18.H0.value, 3.046, a]), cosmo_vec])
 
     lpt_spec = np.zeros((len(cosmo_vec),10,700))
 
@@ -132,10 +133,14 @@ def get_galaxy_ps(bvec, k, zs_sampled):
                                                              use_sigma_8=emu.use_sigma_8, kecleft=False)
         lpt_spec[i,...] = lpt_interp(emu.k)[1:11,:]
     emu_spec = emu.predict(k, cosmo_vec, spec_lpt=lpt_spec)
-    Pkgg = np.zeros((len(k), len(cosmo_vec[:, -1])))
+    Pk = np.zeros((len(k), len(cosmo_vec[:, -1])))
+    if halomatter:
+        min_idx = len(k)
+    else:
+        min_idx = 0
     for i, z in enumerate(cosmo_vec[:, -1]):
-        Pkgg[:, i] = emu.basis_to_full(k, bvec, emu_spec[i, :, :], halomatter=False)
-    return Pkgg
+        Pk[:, i] = emu.basis_to_full(k, bvec, emu_spec[i, :, :], halomatter=halomatter)[min_idx:]
+    return Pk
 
 def get_matter_ps(redshifts):
     #Now get matter power spectra and sigma8 at redshifts between 0 and sufficiently behind the perturbed sources

@@ -84,18 +84,23 @@ class Spec:
         if self.field1.__class__.__name__=='GalDelta' and self.field2.__class__.__name__=='GalDelta':
             # Get galaxy power spectrum at redshifts near the center of the dN/dz
             # Evaluate predictions at the Planck 18 cosmology and redshifts within 5sigma of the dndzmean
-            zs_sampled = np.linspace(lower_z_mean - 5 * higher_sigma, higher_z_mean + 5 * higher_sigma, 15)
+            zs_sampled = np.linspace(lower_z_mean - 5 * higher_sigma, higher_z_mean + 5 * higher_sigma, 30)
             chis_sampled = Planck18.comoving_distance(zs_sampled).value
             # ToDo: Choose k's more systematically
             k = np.logspace(-3, 0, 200)
             # ToDo: Allow tracers to have different bias
-            self.Pk = tracer_spectra.get_galaxy_ps(self.field1.bvec, k, zs_sampled)
-        elif self.field1.__class__.__name__ == 'GalDelta' and self.field2.__class__.__name__ == 'GalShear':
-            # Get galaxy-cross-matter power spectrum at redshifts btw 0 and the source galaxies
-            zs_sampled = np.linspace(0, higher_z_mean + 5 * higher_sigma)
+            self.Pk = tracer_spectra.get_galaxy_ps(self.field1.bvec, k, zs_sampled, halomatter=False)
+        elif all(x in [self.field1.__class__.__name__, self.field2.__class__.__name__] for x in ['GalDelta', 'GalShear']):
+            # Get galaxy-cross-matter power spectrum at a few redshifts around the lens galaxy sample
+            if self.field1.__class__.__name__ == 'GalDelta':
+                gal_z_mean = self.field1.z_mean
+            else:
+                gal_z_mean = self.field2.z_mean
+            zs_sampled = np.linspace(gal_z_mean - 7 * higher_sigma, gal_z_mean + 7 * higher_sigma, 30)
             chis_sampled = Planck18.comoving_distance(zs_sampled).value
-            self.Pk = None # ToDo: Implement galaxy-matter PS
-            k = None # ToDo: Implement galaxy-matter PS
+            # ToDo: Choose k's more systematically
+            k = np.logspace(-3, 0, 200)
+            self.Pk = tracer_spectra.get_galaxy_ps(self.field1.bvec, k, zs_sampled, halomatter=True)
         elif self.field1.__class__.__name__ == 'GalShear' and self.field2.__class__.__name__ == 'GalShear':
             # Get the non-linear matter power spectrum at redshifts btw 0 and the source galaxies
             zs_sampled = np.linspace(0, higher_z_mean + 5 * higher_sigma)
