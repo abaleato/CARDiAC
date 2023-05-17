@@ -50,7 +50,7 @@ class Field:
                 * p_fid_array = np.array of size (grid.n_samples_of_chi). Fiducial phi/g/etc
         """
         self.delta_p_maps = p_pert_array - p_fid_array
-        self.p_fid_array
+        self.p_fid_array = p_fid_array
         self.grid = grid
 
         # Take the spherical harmonic transform of each chi slice.
