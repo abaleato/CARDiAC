@@ -55,7 +55,7 @@ def integrand_unbiased_auto_term(chi, kernel, Pk_interp_1D):
     """
     Integrand for the unbiased Cl auto spectrum in the Limber approximation
     """
-    return Pk_interp_1D(chi) * (kernel(chi) / chi) ** 2
+    return Pk_interp_1D(chi) * kernel(chi) / chi** 2
 
 
 #
