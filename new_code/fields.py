@@ -146,6 +146,8 @@ class GalShear(Field):
         g_d = GalDelta(grid, sigma, z_mean, template_zmean_shifts, template_width_shifts, get_delta_p=False)
         phi_fid_array = g_d.phi_fid_array
         phi_perturbed_array = g_d.phi_perturbed_array
+        self.chi_mean_fid = g_d.chi_mean_fid
+        self.chi_sigma_fid = g_d.chi_sigma_fid
 
         # Calculate the galaxy lensing kernel
         # But first, a dummy run to pre-compile with numba

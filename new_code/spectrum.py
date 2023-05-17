@@ -19,8 +19,8 @@ class Spec:
         assert(field1 == field2), "Fields are incompatible given their grids"
         self.field1 = field1
         self.field2 = field2
-        self.label_dict = {'fields.GalDelta': r'\phi', 'fields.GalShear': r'g'}
-
+        self.label_dict = {'GalDelta': r'\phi', 'GalShear': r'g'}
+        self.grid = field1.grid
 
         # Get the (co)variance btw delta_p's in each slice
         # From this we can directly calculate mode-coupling biases at large l
@@ -28,7 +28,7 @@ class Spec:
         self.cov_at_chi = np.diagonal(covmat, offset=field1.grid.n_samples_of_chi)
 
         # The fiducial projection kernels
-        self.kernel = field1.kernel * field2.kernel
+        #self.kernel = field1.kernel * field2.kernel
 
         # The kernels in Limber integral when approximating the mode-coupling bias in the limit l>>1
         #self.analytic_proj_kernel = interp1d(self.chi_array, self.variance_at_distance_slice/self.chi_array**2)
@@ -74,10 +74,10 @@ class Spec:
         Plot the perturbation covariance as a function of distance
         '''
         plt.axhline(0, color='gray', lw=0.5)
-        plt.axvline(self.grid.chi_mean_fid, color='k', ls='--')
+        plt.axvline(self.field1.chi_mean_fid, color='k', ls='--')
         plt.plot(self.grid.chi_array, self.cov_at_chi)
-        plt.ylabel(r'Cov[$\Delta '+self.label_dict[self.field1.__class__]+'(\chi), \Delta '+
-                   self.label_dict[self.field2.__class__]+'(\chi)$] [Mpc$^{-2}$]')
+        plt.ylabel(r'Cov[$\Delta '+self.label_dict[self.field1.__class__.__name__]+'(\chi), \Delta '+
+                   self.label_dict[self.field2.__class__.__name__]+'(\chi)$] [Mpc$^{-2}$]')
         plt.xlabel(r'$\chi$ [Mpc]')
         plt.show()
 
@@ -88,9 +88,9 @@ class Spec:
         for l_to_plot in np.linspace(10, self.lmax, 8, dtype=int):
             plt.plot(self.grid.chi_array, np.diagonal(self.Cl_deltap_of_chi1_chi2, axis1=1, axis2=2)[l_to_plot, :],
                      label=r'$l={}$'.format(l_to_plot))
-        plt.axvline(self.grid.chi_mean_fid, ls='--', color='k', label=r'$r=\chi(z_{\mathrm{mean}})$')
+        plt.axvline(self.field1.chi_mean_fid, ls='--', color='k', label=r'$r=\chi(z_{\mathrm{mean}})$')
         plt.xlabel(r'$\mathrm{log}_{10}\,\chi$')
-        plt.ylabel(r'$C_l^{\Delta '+self.label_dict[self.field1.__class__]+'}(\chi,\chi)$')
+        plt.ylabel(r'$C_l^{\Delta '+self.label_dict[self.field1.__class__.__name__]+'}(\chi,\chi)$')
         plt.legend()
         plt.xlim([1, 5000])
         plt.show()
@@ -111,7 +111,7 @@ class Spec:
         plt.contourf(X, Y, Z_smoothed, levels=contours, cmap='inferno', extend='both')
 
         ax = plt.gca()
-        ax.axvline(np.where(self.grid.chi_array > self.grid.chi_mean_fid)[0][0], color='r', ls='--', lw=1,
+        ax.axvline(np.where(self.grid.chi_array > self.field1.chi_mean_fid)[0][0], color='r', ls='--', lw=1,
                    label=r'$r=\chi(z_{\mathrm{mean}})$')
         ax.set_ylim([0, self.lmax])
 
@@ -123,7 +123,7 @@ class Spec:
         ax.set_xticklabels(label_locs.astype('str'))
         plt.legend()
 
-        plt.title(r'$\mathrm{log}_{10} \, C_l^{\Delta '+self.label_dict[self.field1.__class__]+'}(\chi)$')
+        plt.title(r'$\mathrm{log}_{10} \, C_l^{\Delta '+self.label_dict[self.field1.__class__.__name__]+'}(\chi)$')
         plt.colorbar(location='right')
         plt.show()
 
@@ -157,7 +157,7 @@ class Spec:
         ax.set_xticks(utils.find_closest_indices(self.grid.chi_array, label_locs))
         ax.set_xticklabels(label_locs.astype('str'))
 
-        plt.title(r'$\mathrm{log}_{10} \, |C_l^{\Delta '+self.label_dict[self.field1.__class__]+'}(\chi,\chi^{*})|$')
+        plt.title(r'$\mathrm{log}_{10} \, |C_l^{\Delta '+self.label_dict[self.field1.__class__.__name__]+'}(\chi,\chi^{*})|$')
         plt.colorbar(location='right')
 
         ax.axvline(chi_idx, label=r'$\chi^{*}$', ls=':', color='w')
@@ -193,8 +193,8 @@ class Spec:
         ax.set_yticklabels(label_locs.astype('str'))
         plt.legend()
 
-        plt.title(r'$ C_\ell^{\Delta '+self.label_dict[self.field1.__class__]+
-                  ' \Delta '+self.label_dict[self.field2.__class__]+'}(\chi_1, \chi_2)$ for $\ell=$' + str(l))
+        plt.title(r'$ C_\ell^{\Delta '+self.label_dict[self.field1.__class__.__name__]+
+                  ' \Delta '+self.label_dict[self.field2.__class__.__name__]+'}(\chi_1, \chi_2)$ for $\ell=$' + str(l))
         cbar = plt.colorbar(location='right')
         cbar_labels = np.linspace(np.min(contours), np.max(contours), 5, dtype=float)
         cbar.set_ticks(cbar_labels)
