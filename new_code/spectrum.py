@@ -4,34 +4,47 @@ from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 from scipy.ndimage.filters import gaussian_filter
 import utils
+import _pickle as pickle
 
 class Spec:
-    def __init__(self, field1, field2=None):
-        """ General class defining observed fields subject to projection anisotropy. Computes analytic projection kernel
-            and alms of each redshift slice
+    def __init__(self, field1=None, field2=None, load=False, save=False, filename=None):
+        """ General class defining a spectrum between two fields, including infrastruture to compute all contributions
             - Inputs:
-                * grid = Instance of grid class containing numerical hyperparams
-                * p_pert_array = np.array of size (grid.npix, grid.n_samples_of_chi). Contains perturbation to phi/g/etc
-                * p_fid_array = np.array of size (grid.n_samples_of_chi). Fiducial phi/g/etc
+                * field1 (optional) = Instance of fields.Field class. Needed when not loading from file
+                * field2 (optional) = Instance of fields.Field class. Defaults to field1
+                * load (optional) = Bool. Whether to load object from file. If True, filename must be provided
+                * save (optional) = Bool. Whether to save object to file. If True, filename must be provided
+                * filename (optional) = str. Path to pickled object to write to / load from
         """
+        assert (field1 is not None or filename is not None), "Must either initialize new object or load one from file!"
+        if (load!=False) or (save!=False):
+            assert (filename is not None), "Must provide a filename when saving or loading"
         if field2 is None:
             field2 = field1
         assert(field1 == field2), "Fields are incompatible given their grids"
-        self.field1 = field1
-        self.field2 = field2
-        self.label_dict = {'GalDelta': r'\phi', 'GalShear': r'g'}
-        self.grid = field1.grid
 
-        # Get the (co)variance btw delta_p's in each slice
-        # From this we can directly calculate mode-coupling biases at large l
-        covmat = np.cov(field1.delta_p_maps, field2.delta_p_maps, ddof=1, rowvar=False)
-        self.cov_at_chi = np.diagonal(covmat, offset=field1.grid.n_samples_of_chi)
+        if load:
+            with open(filename + '.pkl', 'rb') as input:
+                self.__dict__ = pickle.load(input)
+        else:
+            self.field1 = field1
+            self.field2 = field2
+            self.label_dict = {'GalDelta': r'\phi', 'GalShear': r'g'}
+            self.grid = field1.grid
 
-        # The fiducial projection kernels
-        self.kernel = interp1d(self.grid.chi_array, field1.p_fid_array * field2.p_fid_array)
+            # Get the (co)variance btw delta_p's in each slice
+            # From this we can directly calculate mode-coupling biases at large l
+            covmat = np.cov(field1.delta_p_maps, field2.delta_p_maps, ddof=1, rowvar=False)
+            self.cov_at_chi = np.diagonal(covmat, offset=field1.grid.n_samples_of_chi)
 
-        # The kernels in Limber integral when approximating the mode-coupling bias in the limit l>>1
-        #self.analytic_proj_kernel = interp1d(self.chi_array, self.variance_at_distance_slice/self.chi_array**2)
+            # The fiducial projection kernels
+            self.kernel = interp1d(self.grid.chi_array, field1.p_fid_array * field2.p_fid_array)
+
+            # The kernels in Limber integral when approximating the mode-coupling bias in the limit l>>1
+            #self.analytic_proj_kernel = interp1d(self.chi_array, self.variance_at_distance_slice/self.chi_array**2)
+        if save:
+            with open(filename + '.pkl', 'wb') as output:
+                pickle.dump(self.__dict__, output, pickle.HIGHEST_PROTOCOL)
 
 
     def get_Cldp1dp2(self):
