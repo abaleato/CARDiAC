@@ -10,7 +10,7 @@ from cardiac import tracer_spectra
 from cardiac import bias_integrals
 
 class Spec:
-    def __init__(self, field1=None, field2=None, load=False, save=False, filename=None):
+    def __init__(self, field1=None, field2=None, load=False, save=False, filename=None, get_cls=False):
         """ General class defining a spectrum between two fields, including infrastruture to compute all contributions
             - Inputs:
                 * field1 (optional) = Instance of fields.Field class. Needed when not loading from file
@@ -18,6 +18,7 @@ class Spec:
                 * load (optional) = Bool. Whether to load object from file. If True, filename must be provided
                 * save (optional) = Bool. Whether to save object to file. If True, filename must be provided
                 * filename (optional) = str. Path to pickled object to write to / load from
+                * get_cls (optional) = Bool. Whether to calculate all contributions on this first pass
         """
         assert (field1 is not None or load!=False), "Must either initialize new object or load one from file!"
         if (load!=False) or (save!=False):
@@ -45,6 +46,9 @@ class Spec:
 
             # The kernels in Limber integral when approximating the mode-coupling bias in the limit l>>1
             self.analytic_proj_kernel = interpolate.interp1d(self.grid.chi_array, self.cov_at_chi/self.grid.chi_array**2)
+
+        if get_cls:
+            self.get_contributions()
         if save:
             self.save_properties(filename)
 
