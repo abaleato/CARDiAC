@@ -3,7 +3,7 @@ import healpy as hp
 from scipy import interpolate
 import matplotlib.pyplot as plt
 from scipy.ndimage.filters import gaussian_filter
-import _pickle as pickle
+import pickle
 from astropy.cosmology import Planck18
 import utils
 import tracer_spectra
@@ -19,7 +19,7 @@ class Spec:
                 * save (optional) = Bool. Whether to save object to file. If True, filename must be provided
                 * filename (optional) = str. Path to pickled object to write to / load from
         """
-        assert (field1 is not None or filename is not None), "Must either initialize new object or load one from file!"
+        assert (field1 is not None or load!=False), "Must either initialize new object or load one from file!"
         if (load!=False) or (save!=False):
             assert (filename is not None), "Must provide a filename when saving or loading"
         if field2 is None:
