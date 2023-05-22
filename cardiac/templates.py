@@ -3,9 +3,9 @@ import healpy as hp
 import matplotlib.pyplot as plt
 
 class Template:
-    def __init__(self, shifts_template, nside, sigma_of_shift):
+    def __init__(self, shifts_template, nside, sigma_of_shift, mean_offset=0.):
         """ Contains information about spatial shifts to the center or width of a dndz """
-        self.map = shifts_template
+        self.map = shifts_template + mean_offset
         self.npix = len(shifts_template)
         self.nside = nside
         self.sigma_of_shift = sigma_of_shift

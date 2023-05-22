@@ -67,7 +67,8 @@ class Field:
         return self.grid == other.grid
 
 class GalDelta(Field):
-    def __init__(self, grid, sigma, z_mean, bvec, template_zmean_shifts=None, template_width_shifts=None, get_delta_p=True):
+    def __init__(self, grid, sigma, z_mean, bvec, template_zmean_shifts=None, template_width_shifts=None,
+                 template_interloper_frac=None, interloper_sigma=None, interloper_z_mean=None, get_delta_p=True):
         """ Observed galaxy clustering field subject to anisotropy in its (Gaussian) dN/dz
             - Inputs:
                 * grid = Instance of grid class containing numerical hyperparams
@@ -76,23 +77,35 @@ class GalDelta(Field):
                 * bvec = list containing [b1,    b2,    bs2,   bnabla2, SN] to be fed to Anzu to obtain Pgg
                 * template_zmean_shifts = instance of templates.Template with shifts in the mean redshift of the dN/dz
                 * template_width_shifts = instance of templates.Template with shifts in the width of the dN/dz
+                * template_interloper_frac = instance of templates.Template with fraction of main Gaussian that's in
+                                             the secondary one
+                * interloper_sigma = float. Standard deviation of the fiducial interloper dN/dz
+                * interloper_z_mean = float. Central redshift of the fiducial interloper dN/dz
                 * get_delta_p (optional) = Bool. If False, use as helper function in cosmic shear calculation
         """
         if template_zmean_shifts is not None:
             assert (grid.npix==len(template_zmean_shifts.map)), "grid does not match nside of z_mean shift template"
         if template_width_shifts is not None:
             assert (grid.npix==len(template_width_shifts.map)), "grid does not match nside of width shift template"
+        if template_interloper_frac is not None:
+            assert (grid.npix==len(template_interloper_frac.map)), "grid does not match nside of interloped f. template"
 
         self.template_zmean_shifts = template_zmean_shifts
         self.template_width_shifts = template_width_shifts
+        self.template_interloper_frac = template_interloper_frac
         self.sigma = sigma
         self.z_mean = z_mean
+        self.interloper_sigma = interloper_sigma
+        self.interloper_z_mean = interloper_z_mean
         self.bvec = bvec # ToDo: Allow tracers to have different bias
         # The user input is in redshift units because this is more intuitive. However, we will define our dndzs to be
         # Gaussian in comoving distance. So next, we convert to chi
         self.chi_mean_fid = Planck18.comoving_distance(z_mean).value
+        self.interloper_chi_mean_fid = Planck18.comoving_distance(interloper_z_mean).value
         # Width of the fiducial distribution
         self.chi_sigma_fid = Planck18.comoving_distance(z_mean + sigma).value - Planck18.comoving_distance(z_mean).value
+        self.interloper_chi_sigma_fid = Planck18.comoving_distance(interloper_z_mean + interloper_sigma).value \
+                             - Planck18.comoving_distance(interloper_z_mean).value
 
         # Convert template of z-shifts to chi-shifts
         if template_zmean_shifts is None:
@@ -106,10 +119,22 @@ class GalDelta(Field):
             width_shifts_array = Planck18.comoving_distance(z_mean + template_width_shifts.map).value \
                                  - Planck18.comoving_distance(z_mean).value
 
-        # In each pixel, calculate the perturbed dndz as a Gaussian in chi
-        dndz_perturbed = (1 / ((self.chi_sigma_fid + width_shifts_array[..., np.newaxis]) * np.sqrt(2 * np.pi))) * np.exp(
-            -(grid.chi_array - self.chi_mean_fid - chimean_shifts_array[..., np.newaxis]) ** 2 / (
-                        2 * (self.chi_sigma_fid + width_shifts_array[..., np.newaxis]) ** 2))
+        if template_interloper_frac is not None:
+            # If studying interlopers, ignore variations in main Gaussian
+            print('Studying interlopers ONLY and ignoring any other anisotropy')
+            # ToDo: allow for both interlopers and anisotropy in bulk of dndz
+            dndz_main = (1 / (  (self.chi_sigma_fid) * np.sqrt(2 * np.pi))) * \
+                             np.exp( -(grid.chi_array - self.chi_mean_fid ) ** 2 / ( 2 * (self.chi_sigma_fid) ** 2))
+            dndz_interloper = (1 / ((self.interloper_chi_sigma_fid) * np.sqrt(2 * np.pi))) * \
+                        np.exp(-(grid.chi_array - self.interloper_chi_mean_fid) ** 2
+                               / (2 * (self.interloper_chi_sigma_fid) ** 2))
+            dndz_perturbed = (1-template_interloper_frac.map[..., np.newaxis])*dndz_main \
+                             + template_interloper_frac.map[..., np.newaxis]*dndz_interloper
+        else:
+            # In each pixel, calculate the perturbed dndz as a Gaussian in chi
+            dndz_perturbed = (1 / ((self.chi_sigma_fid + width_shifts_array[..., np.newaxis]) * np.sqrt(2 * np.pi))) * np.exp(
+                -(grid.chi_array - self.chi_mean_fid - chimean_shifts_array[..., np.newaxis]) ** 2 / (
+                            2 * (self.chi_sigma_fid + width_shifts_array[..., np.newaxis]) ** 2))
         # Take the fiducial dndz to be the monopole of the perturbed dndz
         dndz_fid = np.mean(dndz_perturbed, axis=0)
 
