@@ -88,6 +88,7 @@ class GalDelta(Field):
         if template_width_shifts is not None:
             assert (grid.npix==len(template_width_shifts.map)), "grid does not match nside of width shift template"
         if template_interloper_frac is not None:
+            assert (interloper_sigma is not None and interloper_z_mean is not None), "Provide interloper dN/dz!"
             assert (grid.npix==len(template_interloper_frac.map)), "grid does not match nside of interloped f. template"
 
         self.template_zmean_shifts = template_zmean_shifts
