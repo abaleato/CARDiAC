@@ -105,7 +105,6 @@ class Spec:
         if ells is None:
             # The ells where we want to evaluate the spectra
             self.ells = np.logspace(np.log10(50), np.log10(1500), 48, dtype=int)
-
         self.unbiased_cls = bias_integrals.unbiased_term(self, self.ells, num_processes=num_processes, miniter=miniter,
                                       maxiter=maxiter, tol=tol)
 
@@ -138,7 +137,7 @@ class Spec:
             zs_sampled = np.linspace(lower_z_mean - 5 * higher_sigma, higher_z_mean + 5 * higher_sigma, 30)
             chis_sampled = Planck18.comoving_distance(zs_sampled).value
             # ToDo: Choose k's more systematically
-            k = np.logspace(-3, np.log10(1.7), 200)
+            k = np.logspace(-3, 0, 200)
             # ToDo: Allow tracers to have different bias
             self.Pk = tracer_spectra.get_galaxy_ps(self.field1.bvec, k, zs_sampled, halomatter=False)
         elif all(x in [self.field1.__class__.__name__, self.field2.__class__.__name__] for x in ['GalDelta', 'GalShear']):
@@ -150,7 +149,7 @@ class Spec:
             zs_sampled = np.linspace(gal_z_mean - 7 * higher_sigma, gal_z_mean + 7 * higher_sigma, 30)
             chis_sampled = Planck18.comoving_distance(zs_sampled).value
             # ToDo: Choose k's more systematically
-            k = np.logspace(-3, np.log10(1.7), 200)
+            k = np.logspace(-3, 0, 200)
             self.Pk = tracer_spectra.get_galaxy_ps(self.field1.bvec, k, zs_sampled, halomatter=True)
         elif self.field1.__class__.__name__ == 'GalShear' and self.field2.__class__.__name__ == 'GalShear':
             # Get the non-linear matter power spectrum at redshifts btw 0 and the source galaxies

@@ -16,7 +16,7 @@ class Template:
         plt.show()
 
 class MockTemplate(Template):
-    def __init__(self, sigma_of_shift, nside, alpha, lmax_pert):
+    def __init__(self, sigma_of_shift, nside, alpha, lmax_pert, mean_offset=0.):
         """ Generate a pixelized map where each pixel value corresponds to a random shift of the
         either the center or the width of the dndz, which is assumed to be Gaussian. The map has
         a standard deviation set by sigma_of_shift, and some underlying power-law power spectrum
@@ -26,6 +26,8 @@ class MockTemplate(Template):
                 * nside = int. Defines the pixelization
                 * alpha = float. Power law index for the perturbation Cls
                 * lmax_pert = int. lmax of the Cls
+                * mean_offset (optional) = float. Mean value about which template must fluctuate
+                    (useful for template of interloper fraction, otherwise set to zero by default)
         """
         self.lmax_pert = lmax_pert
         self.alpha = alpha
@@ -37,7 +39,7 @@ class MockTemplate(Template):
         # Normalize Cls to give desired variance
         norm_factor_for_alms = np.nan_to_num(sigma_of_shift**2 / np.var(sim_map, ddof=1))**0.5
         shifts_template = norm_factor_for_alms*sim_map
-        super().__init__(shifts_template, nside, sigma_of_shift)
+        super().__init__(shifts_template, nside, sigma_of_shift, mean_offset)
         
         
 class CustomTemplate(Template):
