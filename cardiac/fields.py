@@ -102,11 +102,8 @@ class GalDelta(Field):
         # The user input is in redshift units because this is more intuitive. However, we will define our dndzs to be
         # Gaussian in comoving distance. So next, we convert to chi
         self.chi_mean_fid = Planck18.comoving_distance(z_mean).value
-        self.interloper_chi_mean_fid = Planck18.comoving_distance(interloper_z_mean).value
         # Width of the fiducial distribution
         self.chi_sigma_fid = Planck18.comoving_distance(z_mean + sigma).value - Planck18.comoving_distance(z_mean).value
-        self.interloper_chi_sigma_fid = Planck18.comoving_distance(interloper_z_mean + interloper_sigma).value \
-                             - Planck18.comoving_distance(interloper_z_mean).value
 
         # Convert template of z-shifts to chi-shifts
         if template_zmean_shifts is None:
@@ -124,6 +121,9 @@ class GalDelta(Field):
             # If studying interlopers, ignore variations in main Gaussian
             print('Studying interlopers ONLY and ignoring any other anisotropy')
             # ToDo: allow for both interlopers and anisotropy in bulk of dndz
+            self.interloper_chi_mean_fid = Planck18.comoving_distance(interloper_z_mean).value
+            self.interloper_chi_sigma_fid = Planck18.comoving_distance(interloper_z_mean + interloper_sigma).value \
+                                            - Planck18.comoving_distance(interloper_z_mean).value
             dndz_main = (1 / (  (self.chi_sigma_fid) * np.sqrt(2 * np.pi))) * \
                              np.exp( -(grid.chi_array - self.chi_mean_fid ) ** 2 / ( 2 * (self.chi_sigma_fid) ** 2))
             dndz_interloper = (1 / ((self.interloper_chi_sigma_fid) * np.sqrt(2 * np.pi))) * \
