@@ -124,6 +124,7 @@ class GalDelta(Field):
             self.interloper_chi_mean_fid = Planck18.comoving_distance(interloper_z_mean).value
             self.interloper_chi_sigma_fid = Planck18.comoving_distance(interloper_z_mean + interloper_sigma).value \
                                             - Planck18.comoving_distance(interloper_z_mean).value
+            # TODO: Implement non-gaussian dndz
             dndz_main = (1 / (  (self.chi_sigma_fid) * np.sqrt(2 * np.pi))) * \
                              np.exp( -(grid.chi_array - self.chi_mean_fid ) ** 2 / ( 2 * (self.chi_sigma_fid) ** 2))
             dndz_interloper = (1 / ((self.interloper_chi_sigma_fid) * np.sqrt(2 * np.pi))) * \
