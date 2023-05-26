@@ -18,12 +18,15 @@ At present, the code supports auto- and cross-correlations of galaxy samples and
 - `camb`, `anzu` (though the user could replace them with their own power spectra)
 - `numba` for JIT compilation of galaxy lensing kernels, which are slow to compute otherwise
 
+###### PyPI:
+    pip install cardiac==1.0.0
+
 ###### Editable installation in-place:
-First, clone the repository:
+First, clone the repository
 
     git clone https://github.com/abaleato/CARDiAC.git   
 
-Then, run:
+and from within it run
 
     python -m pip install -e .
 
