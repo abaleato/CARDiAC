@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cardiac"
+version = "1.0.0"
+description = "Code for Anisotropic Redshift Distributions in Angular Clustering"
+readme = "README_PyPI.md"
+authors = [{ name = "Anton Baleato Lizancos", email = "a.baleatolizancos@berkeley.edu" }]
+license = { file = "LICENSE" }
+classifiers = [
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+]
+keywords = ["feed", "reader", "tutorial"]
+dependencies = [
+    "numpy",
+    "scipy",
+    "matplotlib",
+    "astropy",
+    "healpy",
+    "camb",
+    "anzu",
+    "numba",
+]
+requires-python = ">=3.7"
+
+[project.urls]
+Homepage = "https://github.com/abaleato/CARDiAC"
