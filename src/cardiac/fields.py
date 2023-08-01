@@ -41,17 +41,19 @@ class grid:
                 (self.chi_max_int == other.chi_max_int))
 
 class Field:
-    def __init__(self, grid, p_pert_array, p_fid_array):
+    def __init__(self, grid, p_pert_array, p_fid_array, mask):
         """ General class defining observed fields subject to projection anisotropy. Computes analytic projection kernel
             and alms of each redshift slice
             - Inputs:
                 * grid = Instance of grid class containing numerical hyperparams
                 * p_pert_array = np.array of size (grid.npix, grid.n_samples_of_chi). Contains perturbation to phi/g/etc
                 * p_fid_array = np.array of size (grid.n_samples_of_chi). Fiducial phi/g/etc
+                * mask = np.array of floats defining observed footprint
         """
         self.delta_p_maps = p_pert_array - p_fid_array
         self.p_fid_array = p_fid_array
         self.grid = grid
+        self.mask = mask
 
         # Take the spherical harmonic transform of each chi slice.
         # Conveniently, we can take complex SHT so array sizes reduce by x2
@@ -85,11 +87,14 @@ class GalDelta(Field):
         """
         if template_zmean_shifts is not None:
             assert (grid.npix==len(template_zmean_shifts.map)), "grid does not match nside of z_mean shift template"
+            self.mask = template_zmean_shifts.mask
         if template_width_shifts is not None:
             assert (grid.npix==len(template_width_shifts.map)), "grid does not match nside of width shift template"
+            self.mask = template_width_shifts.mask
         if template_interloper_frac is not None:
             assert (interloper_sigma is not None and interloper_z_mean is not None), "Provide interloper dN/dz!"
             assert (grid.npix==len(template_interloper_frac.map)), "grid does not match nside of interloped f. template"
+            self.mask = template_interloper_frac.mask
 
         self.template_zmean_shifts = template_zmean_shifts
         self.template_width_shifts = template_width_shifts
@@ -152,7 +157,7 @@ class GalDelta(Field):
 
         if get_delta_p:
             # Go on to extract the alms at each chi, and so on
-            super().__init__(grid, phi_perturbed_array, phi_fid_array)
+            super().__init__(grid, phi_perturbed_array, phi_fid_array, self.mask)
         else:
             # Alternatively, when doing the cosmic shear calculation, we only need these two
             self.phi_perturbed_array = phi_perturbed_array
@@ -172,6 +177,10 @@ class GalShear(Field):
         self.z_mean = z_mean
         self.template_zmean_shifts = template_zmean_shifts
         self.template_width_shifts = template_width_shifts
+        if template_zmean_shifts is not None:
+            self.mask = template_zmean_shifts.mask
+        else:
+            self.mask = template_width_shifts.mask
 
         g_d = GalDelta(grid, sigma, z_mean, 'dummy', template_zmean_shifts, template_width_shifts, get_delta_p=False)
         phi_fid_array = g_d.phi_fid_array
@@ -190,4 +199,4 @@ class GalShear(Field):
                 1 + grid.z_array[0, :]) * utils.lens_efficiency_kernel(grid.chi_array, grid.chi_max_int, phi_perturbed_array)
 
         # Go on to extract the alms at each chi, and so on
-        super().__init__(grid, g_pert, g_fid)
+        super().__init__(grid, g_pert, g_fid, self.mask)

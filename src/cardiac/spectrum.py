@@ -36,10 +36,16 @@ class Spec:
             self.label_dict = {'GalDelta': r'\phi', 'GalShear': r'g'}
             self.grid = field1.grid
 
+            # Measure sky fraction covered by footprint. Need it to de-bias measurement of Cls / covariance of phi
+            # TODO: generalize to case where footprint of field1 is different from that of field2
+            assert (np.array_equal(self.field1.mask,
+                                   self.field2.mask)), "Implement case where footprint of field1 is different from that of field2"
+            self.fsky = np.mean(self.field1.mask)
+
             # Get the (co)variance btw delta_p's in each slice
             # From this we can directly calculate mode-coupling biases at large l
             covmat = np.cov(field1.delta_p_maps, field2.delta_p_maps, ddof=1, rowvar=False)
-            self.cov_at_chi = np.diagonal(covmat, offset=field1.grid.n_samples_of_chi)
+            self.cov_at_chi = np.diagonal(covmat, offset=field1.grid.n_samples_of_chi) / self.fsky
 
             # The fiducial projection kernels
             self.kernel = interpolate.interp1d(self.grid.chi_array, field1.p_fid_array * field2.p_fid_array)
@@ -77,10 +83,12 @@ class Spec:
             else:
                 factor = 1
             # Get angular PS and deconvolve pixel window function for all possible combinations of chi1 and chi2
+            # We correct for partial-sky coverage using a simple fsky correction.
+            # TODO: implement Namaster or similar
             self.Cl_deltap_of_chi1_chi2[l, :, :] += factor * np.outer(self.field1.delta_p_lm_of_chi[i, :],
                                                                       np.conj(
                                                                           self.field2.delta_p_lm_of_chi[i, :])).real / (
-                                                            2 * l + 1)
+                                                            2 * l + 1) / self.fsky
 
         # We'll need the interpolated version of this
         self.cldp_interp = interpolate.interp1d(self.field1.grid.chi_array,
