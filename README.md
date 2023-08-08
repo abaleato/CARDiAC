@@ -15,8 +15,11 @@ At present, the code supports auto- and cross-correlations of galaxy samples and
 - `numpy`, `scipy`, `matplotlib`
 - `astropy`
 - `healpy`
-- `camb`, `anzu` (though the user could replace them with their own power spectra)
+- `camb`
 - `numba` for JIT compilation of galaxy lensing kernels, which are slow to compute otherwise
+
+Optionally, galaxy-galaxy and galaxy-matter spectra can be obtained from a Lagrangian bias expansion using the `anzu`
+code if the user has it installed.
 
 ###### PyPI:
     pip install cardiac==1.0.0

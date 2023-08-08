@@ -10,7 +10,8 @@ from cardiac import tracer_spectra
 from cardiac import bias_integrals
 
 class Spec:
-    def __init__(self, field1=None, field2=None, load=False, save=False, filename=None, get_cls=False):
+    def __init__(self, field1=None, field2=None, load=False, save=False, filename=None, get_cls=False,
+                 gbias_mode='linear'):
         """ General class defining a spectrum between two fields, including infrastruture to compute all contributions
             - Inputs:
                 * field1 (optional) = Instance of fields.Field class. Needed when not loading from file
@@ -19,6 +20,7 @@ class Spec:
                 * save (optional) = Bool. Whether to save object to file. If True, filename must be provided
                 * filename (optional) = str. Path to pickled object to write to / load from
                 * get_cls (optional) = Bool. Whether to calculate all contributions on this first pass
+                * gbias_mode (optional) = 'linear' or 'anzu'. Galaxy bias prescription
         """
         assert (field1 is not None or load!=False), "Must either initialize new object or load one from file!"
         if (load!=False) or (save!=False):
@@ -54,7 +56,7 @@ class Spec:
             self.analytic_proj_kernel = interpolate.interp1d(self.grid.chi_array, self.cov_at_chi/self.grid.chi_array**2)
 
         if get_cls:
-            self.get_contributions()
+            self.get_contributions(gbias_mode=gbias_mode)
         if save:
             self.save_properties(filename)
 
@@ -94,7 +96,8 @@ class Spec:
         self.cldp_interp = interpolate.interp1d(self.field1.grid.chi_array,
                                     np.diagonal(self.Cl_deltap_of_chi1_chi2, axis1=1, axis2=2), axis=-1)
 
-    def get_contributions(self, ells=None, num_processes=1, miniter=1000, maxiter=5000, tol=1e-11, lprime_max='none'):
+    def get_contributions(self, ells=None, num_processes=1, miniter=1000, maxiter=5000, tol=1e-11, lprime_max='none',
+                          gbias_mode='linear'):
         """
         Helper function to calculate all the contributions to angular clustering -- isotropic and anisotropic
         - Inputs:
@@ -104,11 +107,12 @@ class Spec:
         * maxiter (optional) = int. Maximum number of iterations for quadrature.
         * tol (optional) = int. Error tolerance before breaking numerical integration.
         * lprime_max (optional) = int. Value of l above which we ignore the anisotropy in C_l^{\Delta \phi}
+        * gbias_mode (optional) = 'linear' or 'anzu'. Galaxy bias prescription
         """
         if not hasattr(self, 'Cl_deltap_of_chi1_chi2'):
             self.get_Cldp1dp2()
         if not hasattr(self, 'Pk'):
-            self.get_3D_spectrum()
+            self.get_3D_spectrum(gbias_mode=gbias_mode)
 
         if ells is None:
             # The ells where we want to evaluate the spectra
@@ -132,9 +136,11 @@ class Spec:
             self.additive_bias = bias_integrals.additive_bias(self, self.ells, num_processes=num_processes,
                                                      miniter=miniter, maxiter=maxiter, tol=tol)
 
-    def get_3D_spectrum(self):
+    def get_3D_spectrum(self, gbias_mode='linear'):
         """ Helper function to calculate the 3D power spectra of the tracers. Uses functions in tracer_spectra.py,
             which in turn call CAMB/anzu. These can be easily replaced with whatever the user prefers
+            Input:
+                * gbias_mode (optional) = 'linear' or 'anzu'. Galaxy bias prescription
         """
         higher_z_mean = max(self.field1.z_mean, self.field1.z_mean)  # Central redshift of the furthest away tracer
         lower_z_mean = min(self.field1.z_mean, self.field1.z_mean)  # Central redshift of the furthest away tracer
@@ -144,21 +150,33 @@ class Spec:
             # Evaluate predictions at the Planck 18 cosmology and redshifts within 5sigma of the dndzmean
             zs_sampled = np.linspace(lower_z_mean - 5 * higher_sigma, higher_z_mean + 5 * higher_sigma, 30)
             chis_sampled = Planck18.comoving_distance(zs_sampled).value
-            # ToDo: Choose k's more systematically
-            k = np.logspace(-3, 0, 200)
-            # ToDo: Allow tracers to have different bias
-            self.Pk = tracer_spectra.get_galaxy_ps(self.field1.bvec, k, zs_sampled, halomatter=False)
+
+            if gbias_mode=='linear':
+                assert(type(self.field1.bvec)==float and type(self.field2.bvec)==float), "Galaxy bias must be a float" \
+                                                                               " when using linear bias prescription"
+            else:
+                assert (len(self.field1.bvec) > 1 and len(
+                    self.field2.bvec) > 1), "Please provide all Lagrangian bias parameters required by anzu"
+
+            k, self.Pk = tracer_spectra.get_galaxy_ps(self.field1.bvec, zs_sampled, g2_bias=self.field2.bvec,
+                                                      gbias_mode=gbias_mode)
         elif all(x in [self.field1.__class__.__name__, self.field2.__class__.__name__] for x in ['GalDelta', 'GalShear']):
             # Get galaxy-cross-matter power spectrum at a few redshifts around the lens galaxy sample
             if self.field1.__class__.__name__ == 'GalDelta':
                 gal_z_mean = self.field1.z_mean
+                gbias = self.field1.bvec
             else:
                 gal_z_mean = self.field2.z_mean
+                gbias = self.field2.bvec
             zs_sampled = np.linspace(gal_z_mean - 7 * higher_sigma, gal_z_mean + 7 * higher_sigma, 30)
             chis_sampled = Planck18.comoving_distance(zs_sampled).value
-            # ToDo: Choose k's more systematically
-            k = np.logspace(-3, 0, 200)
-            self.Pk = tracer_spectra.get_galaxy_ps(self.field1.bvec, k, zs_sampled, halomatter=True)
+
+            if gbias_mode=='linear':
+                assert(type(gbias)==float), "Galaxy bias must be a float when using linear bias prescription"
+            else:
+                assert (len(gbias) > 1), "Please provide all Lagrangian bias parameters required by anzu"
+
+            k, self.Pk = tracer_spectra.get_galaxy_ps(gbias, zs_sampled, g2_bias=None, gbias_mode=gbias_mode)
         elif self.field1.__class__.__name__ == 'GalShear' and self.field2.__class__.__name__ == 'GalShear':
             # Get the non-linear matter power spectrum at redshifts btw 0 and the source galaxies
             zs_sampled = np.linspace(0, higher_z_mean + 5 * higher_sigma)

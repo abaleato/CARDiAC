@@ -21,7 +21,6 @@ dependencies = [
     "astropy",
     "healpy",
     "camb",
-    "anzu",
     "numba",
 ]
 requires-python = ">=3.7"
