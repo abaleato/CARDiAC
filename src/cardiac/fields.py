@@ -48,7 +48,7 @@ class Field:
                 * grid = Instance of grid class containing numerical hyperparams
                 * p_pert_array = np.array of size (grid.npix, grid.n_samples_of_chi). Contains perturbation to phi/g/etc
                 * p_fid_array = np.array of size (grid.n_samples_of_chi). Fiducial phi/g/etc
-                * mask = np.array of floats defining observed footprint
+                * mask = np.array of float values between 0 and 1 defining observed footprint
         """
         self.delta_p_maps = mask[...,None] * (p_pert_array - p_fid_array)
         self.p_fid_array = p_fid_array
