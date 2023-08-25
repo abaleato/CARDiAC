@@ -50,7 +50,7 @@ class Field:
                 * p_fid_array = np.array of size (grid.n_samples_of_chi). Fiducial phi/g/etc
                 * mask = np.array of floats defining observed footprint
         """
-        self.delta_p_maps = p_pert_array - p_fid_array
+        self.delta_p_maps = mask[...,None] * (p_pert_array - p_fid_array)
         self.p_fid_array = p_fid_array
         self.grid = grid
         self.mask = mask
