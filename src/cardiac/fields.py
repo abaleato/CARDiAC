@@ -144,7 +144,7 @@ class GalDelta(Field):
                             2 * (self.chi_sigma_fid + width_shifts_array[..., np.newaxis]) ** 2))
 
         # Take the fiducial dndz to be the monopole of the perturbed dndz
-        dndz_fid = np.mean(self.mask[..., None] * dndz_perturbed, axis=0)
+        dndz_fid = np.mean(dndz_perturbed, axis=0, where=self.mask[..., None].astype(bool))
 
         # Convert dndz to selection function
         phi_perturbed_array = (Planck18.H(grid.z_array[0, :]) / c).value * dndz_perturbed
