@@ -50,7 +50,7 @@ class Field:
                 * p_fid_array = np.array of size (grid.n_samples_of_chi). Fiducial phi/g/etc
                 * mask = np.array of float values between 0 and 1 defining observed footprint
         """
-        self.delta_p_maps = mask[...,None] * (p_pert_array - p_fid_array)
+        self.delta_p_maps = mask[..., None] * (p_pert_array - p_fid_array)
         self.p_fid_array = p_fid_array
         self.grid = grid
         self.mask = mask
@@ -142,8 +142,9 @@ class GalDelta(Field):
             dndz_perturbed = (1 / ((self.chi_sigma_fid + width_shifts_array[..., np.newaxis]) * np.sqrt(2 * np.pi))) * np.exp(
                 -(grid.chi_array - self.chi_mean_fid - chimean_shifts_array[..., np.newaxis]) ** 2 / (
                             2 * (self.chi_sigma_fid + width_shifts_array[..., np.newaxis]) ** 2))
+
         # Take the fiducial dndz to be the monopole of the perturbed dndz
-        dndz_fid = np.mean(dndz_perturbed, axis=0)
+        dndz_fid = np.mean(self.mask[..., None] * dndz_perturbed, axis=0)
 
         # Convert dndz to selection function
         phi_perturbed_array = (Planck18.H(grid.z_array[0, :]) / c).value * dndz_perturbed

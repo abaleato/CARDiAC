@@ -13,7 +13,7 @@ class Template:
 
     def show(self, temp_plot_min=None, temp_plot_max=None, title=r'$z_{\mathrm{shift}}$'):
         """ Mollview visualization of the shifts template """
-        hp.mollview(self.map, min=temp_plot_min, max=temp_plot_max, cmap='PuOr', title=title)
+        hp.mollview(self.mask * self.map, min=temp_plot_min, max=temp_plot_max, cmap='PuOr', title=title)
         plt.show()
 
 class MockTemplate(Template):
