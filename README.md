@@ -22,7 +22,7 @@ Optionally, galaxy-galaxy and galaxy-matter spectra can be obtained from a Lagra
 code if the user has it installed.
 
 ###### PyPI:
-    pip install cardiac==1.1.1
+    pip install cardiac==1.1.2
 
 ###### Editable installation in-place:
 First, clone the repository
