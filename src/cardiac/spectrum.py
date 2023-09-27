@@ -148,7 +148,7 @@ class Spec:
         if self.field1.__class__.__name__=='GalDelta' and self.field2.__class__.__name__=='GalDelta':
             # Get galaxy power spectrum at redshifts near the center of the dN/dz
             # Evaluate predictions at the Planck 18 cosmology and redshifts within 5sigma of the dndzmean
-            zs_sampled = np.linspace(lower_z_mean - 5 * higher_sigma, higher_z_mean + 5 * higher_sigma, 30)
+            zs_sampled = np.linspace(max(lower_z_mean - 5 * higher_sigma, 0.01), higher_z_mean + 5 * higher_sigma, 30) 
             chis_sampled = Planck18.comoving_distance(zs_sampled).value
 
             if gbias_mode=='linear':
@@ -168,7 +168,7 @@ class Spec:
             else:
                 gal_z_mean = self.field2.z_mean
                 gbias = self.field2.bvec
-            zs_sampled = np.linspace(gal_z_mean - 7 * higher_sigma, gal_z_mean + 7 * higher_sigma, 30)
+            zs_sampled = np.linspace(max(gal_z_mean - 7 * higher_sigma, 0.01), gal_z_mean + 7 * higher_sigma, 30)
             chis_sampled = Planck18.comoving_distance(zs_sampled).value
 
             if gbias_mode=='linear':
