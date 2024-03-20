@@ -152,7 +152,7 @@ class Spec:
             chis_sampled = Planck18.comoving_distance(zs_sampled).value
 
             if gbias_mode=='linear':
-                assert(type(self.field1.bvec)==float and type(self.field2.bvec)==float), "Galaxy bias must be a float" \
+                assert(isinstance(self.field1.bvec, float) and isinstance(self.field2.bvec, float)), "Galaxy bias must be a float" \
                                                                                " when using linear bias prescription"
             else:
                 assert (len(self.field1.bvec) > 1 and len(
@@ -172,7 +172,7 @@ class Spec:
             chis_sampled = Planck18.comoving_distance(zs_sampled).value
 
             if gbias_mode=='linear':
-                assert(type(gbias)==float), "Galaxy bias must be a float when using linear bias prescription"
+                assert(isinstance(gbias, float)), "Galaxy bias must be a float when using linear bias prescription"
             else:
                 assert (len(gbias) > 1), "Please provide all Lagrangian bias parameters required by anzu"
 
