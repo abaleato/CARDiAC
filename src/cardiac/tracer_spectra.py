@@ -200,5 +200,5 @@ def get_matter_ps(redshifts):
 
     # Remove factors of h
     k_nonlin = kh_nonlin * h
-    pk_nonlin *= h**3
+    pk_nonlin /= h**3
     return k_nonlin, pk_nonlin
