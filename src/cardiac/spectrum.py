@@ -11,7 +11,7 @@ from cardiac import bias_integrals
 
 class Spec:
     def __init__(self, field1=None, field2=None, load=False, save=False, filename=None, get_cls=False,
-                 gbias_mode='linear'):
+                 gbias_mode='linear', lightweight_save=False):
         """ General class defining a spectrum between two fields, including infrastruture to compute all contributions
             - Inputs:
                 * field1 (optional) = Instance of fields.Field class. Needed when not loading from file
@@ -21,7 +21,11 @@ class Spec:
                 * filename (optional) = str. Path to pickled object to write to / load from
                 * get_cls (optional) = Bool. Whether to calculate all contributions on this first pass
                 * gbias_mode (optional) = 'linear' or 'anzu'. Galaxy bias prescription
+                * lightweight_save (optional) = Bool. Whether to save full fledged or minimal object without fields and grids.
+                                                Only effective if save=True. Default is False, but this is heavy on storage.
         """
+        if lightweight_save:
+            assert save, "lightweight_save can only be True if save is True"
         assert (field1 is not None or load!=False), "Must either initialize new object or load one from file!"
         if (load!=False) or (save!=False):
             assert (filename is not None), "Must provide a filename when saving or loading"
@@ -58,16 +62,25 @@ class Spec:
         if get_cls:
             self.get_contributions(gbias_mode=gbias_mode)
         if save:
-            self.save_properties(filename)
+            self.save_properties(filename, lightweight_save)
 
-    def save_properties(self, output_filename='./dict_with_properties'):
+    def save_properties(self, output_filename='./dict_with_properties', lightweight_save=True):
         """
         Save the dictionary of key properties to file
         Inputs:
             * output_filename = str. Output filename
+            * lightweight_save = Bool. Whether to save full fledged or minimal object without fields and grids
         """
         with open(output_filename+'.pkl', 'wb') as output:
-            pickle.dump(self.__dict__, output, pickle.HIGHEST_PROTOCOL)
+            # Only save self.field1 and self.field2 if lightweight_save is False
+            if not lightweight_save:
+                pickle.dump(self.__dict__, output, pickle.HIGHEST_PROTOCOL)
+            else:
+                # This will still be useful for plotting, etc.
+                self.chi_array = self.grid.chi_array
+                # Remove the heavy grid stuff in fields
+                pickle.dump({k: v for k, v in self.__dict__.items() if k not in ['field1', 'field2', 'grid']}, output,
+                            pickle.HIGHEST_PROTOCOL)
 
     def get_Cldp1dp2(self):
         """ Calculate the multi-frequency angular power spectrum of our perturbations (MAPS), a key ingredient
@@ -117,6 +130,11 @@ class Spec:
         if ells is None:
             # The ells where we want to evaluate the spectra
             self.ells = np.logspace(np.log10(50), np.log10(1500), 48, dtype=int)
+        else:
+            # Check that the provided ells are of integer type
+            assert ells.dtype==int, "Please provide integer values of ell"
+            self.ells = ells
+
         self.unbiased_cls = bias_integrals.unbiased_term(self, self.ells, num_processes=num_processes, miniter=miniter,
                                       maxiter=maxiter, tol=tol)
 
