@@ -38,4 +38,24 @@ and from within it run
 See `Tutorial.ipynb`.
 
 ## Attribution
-If you use the code, please cite [Baleato Lizancos & White 2023](https://arxiv.org/abs/2305.15406).
+If you use the code, please cite 
+```
+@ARTICLE{2023JCAP...07..044B,
+       author = {{Baleato Lizancos}, Ant{\'o}n and {White}, Martin},
+        title = "{The impact of anisotropic redshift distributions on angular clustering}",
+      journal = {\jcap},
+     keywords = {cosmological parameters from LSS, power spectrum, Astrophysics - Cosmology and Nongalactic Astrophysics},
+         year = 2023,
+        month = jul,
+       volume = {2023},
+       number = {7},
+          eid = {044},
+        pages = {044},
+          doi = {10.1088/1475-7516/2023/07/044},
+archivePrefix = {arXiv},
+       eprint = {2305.15406},
+ primaryClass = {astro-ph.CO},
+       adsurl = {https://ui.adsabs.harvard.edu/abs/2023JCAP...07..044B},
+      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}
+```
