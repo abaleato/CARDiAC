@@ -1,5 +1,8 @@
 # CARDiAC
 
+[![arXiv](https://img.shields.io/badge/arXiv-2305.15406-b31b1b.svg)](https://arxiv.org/abs/2305.15406)
+[![PyPI version](https://img.shields.io/pypi/v/cardiac.svg)](https://pypi.org/project/cardiac/)
+
 **C**ode for **A**nisotropic **R**edshift **D**istributions **i**n **A**ngular **C**lustering
 
 CARDiAC is a python code that computes the impact of anisotropic redshift distributions on a wide class of angular
